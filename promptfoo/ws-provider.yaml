@@ -1,0 +1,13 @@
+id: websocket
+config:
+  url: 'ws://localhost:8080/chatbot'
+  messageTemplate: |
+    {
+      "message": "{{query}}",
+      "sessionId": "{{sessionId}}",
+      "timezoneOffset": {{timezoneOffset}}
+    }
+  transformResponse: 'data.message'
+  timeoutMs: 30000
+  keepAlive: true
+
