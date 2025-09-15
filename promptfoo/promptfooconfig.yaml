@@ -1,0 +1,28 @@
+providers:
+  - file://http-provider.yaml
+#  - file://ws-provider.yaml
+
+# Verify condition for all tests
+defaultTest:
+  options:
+    provider:
+      text:
+        id: openai:gpt-4.1-mini
+        config:
+          temperature: 0
+      embedding:
+        id: openai:text-embedding-3-small
+  assert:
+    - type: latency
+      threshold: 5000
+    - type: llm-rubric
+      value:
+        - Check if the response maintains a professional tone
+        - Ensure no confidential information is revealed
+
+scenarios:
+  - file://scenarios/chat-memory.yaml
+#  - file://scenarios/moderation.yaml
+#  - file://scenarios/rag.yaml
+#  - file://scenarios/stocks.yaml
+  - file://scenarios/time.yaml

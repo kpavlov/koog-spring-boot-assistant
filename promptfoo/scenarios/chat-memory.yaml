@@ -1,0 +1,23 @@
+config:
+  - vars:
+      timezoneOffset: -180
+      sessionId: promptfoo-chat-memory
+
+tests:
+  - description: Hello
+    options:
+      runSerially: true # first step
+    vars:
+      query: My name is Alice
+    assert:
+      - type: llm-rubric
+        value: Addresses Alice by name
+
+  - description: Get name
+    options:
+      runSerially: true # second step
+    vars:
+      query: What is my name?
+    assert:
+      - type: contains
+        value: Alice
