@@ -1,0 +1,14 @@
+config:
+  - vars:
+      timezoneOffset: -180
+      sessionId: promptfoo-easytrade-starter
+      context: file://../app/data/knowledge/easytrade-starter-portfolio.md
+tests:
+  - description: Explain EasyTrade Starter Portfolio
+    vars:
+      query: What is minimum starting investment?
+    assert:
+      - type: contains
+        value: 25
+      - type: context-faithfulness
+        threshold: 0.9

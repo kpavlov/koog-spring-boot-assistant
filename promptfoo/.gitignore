@@ -1,0 +1,5 @@
+evalLastWritten
+promptfoo.db
+promptfoo.yaml
+*.log
+output.yml

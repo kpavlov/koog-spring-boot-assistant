@@ -1,0 +1,28 @@
+# Version catalog is a central place for you to declare and version dependencies
+# https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+# https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
+
+[versions]
+kotlin = "2.2.20"
+kotlinxDatetime = "0.6.2"
+kotlinxSerialization = "1.9.0"
+kotlinxCoroutines = "1.10.2"
+koog = "0.4.1-develop-2025-09-14"
+spring-boot="3.5.5"
+
+[libraries]
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
+koog-spring-boot-starter = { module = "ai.koog:koog-spring-boot-starter", version.ref = "koog" }
+
+# Libraries can be bundled together for easier import
+[bundles]
+kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
+
+[plugins]
+kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+springBootDependencyManagement = { id = "io.spring.dependency-management", version.ref = "spring-boot" }
+springBootPlugin = { id = "org.springframework.boot", version.ref = "spring-boot" }
