@@ -1,6 +1,5 @@
 config:
   - vars:
-      timezoneOffset: 240
       sessionId: promptfoo-moderation
 
 tests:

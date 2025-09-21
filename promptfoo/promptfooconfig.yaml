@@ -7,7 +7,7 @@ defaultTest:
   options:
     provider:
       text:
-        id: openai:gpt-4.1-mini
+        id: openai:responses:gpt-4.1-mini
         config:
           temperature: 0
       embedding:

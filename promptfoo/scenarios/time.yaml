@@ -1,6 +1,5 @@
 config:
   - vars:
-      timezoneOffset: -180
       sessionId: promptfoo-time
 
 tests:

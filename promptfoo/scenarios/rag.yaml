@@ -1,6 +1,5 @@
 config:
   - vars:
-      timezoneOffset: -180
       sessionId: promptfoo-easytrade-starter
       context: file://../app/data/knowledge/easytrade-starter-portfolio.md
 tests:
