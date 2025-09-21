@@ -1,31 +1,37 @@
 
 ai:
-    koog:
-        openai:
-            api-key: ${OPENAI_API_KEY}
+  koog:
+    chat-memory:
+      session-store:
+        path: "./var/tmp/session-store"
+    rag:
+      embedding-store:
+        path: "./var/tmp/embedding-store"
+      knowledge-base:
+        path: "./data/knowledge"
 
 logging:
-    level:
-        "org.springframework.web": debug
-        "ai.koog": debug
+  level:
+    "ai.koog": debug
+    "io.micrometer.registry.otlp": error
+    "org.springframework.web": debug
 
 server:
-    shutdown: immediate
-    http2:
-        enabled: true
-    servlet:
-        jsp:
-            registered: false
-
+  shutdown: immediate
+  http2:
+    enabled: true
+  servlet:
+    jsp:
+      registered: false
 
 management:
-    otlp:
-        metrics:
-            export:
-                step: 3s
+  otlp:
+    metrics:
+      export:
+        step: 3s
 spring:
-    application:
-        name: ${build.name}
-    config:
-        import:
-        - "classpath:/META-INF/build-info.properties"
+  application:
+    name: ${build.name}
+  config:
+    import:
+      - "classpath:/META-INF/build-info.properties"

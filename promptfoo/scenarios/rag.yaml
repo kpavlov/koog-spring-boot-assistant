@@ -1,13 +1,13 @@
 config:
   - vars:
-      sessionId: promptfoo-easytrade-starter
-      context: file://../app/data/knowledge/easytrade-starter-portfolio.md
+      sessionId: promptfoo-rag
+      context: file://../app/data/knowledge/4-morning_pine_elixir.md
 tests:
-  - description: Explain EasyTrade Starter Portfolio
+  - description: Explain morning Pine Elixir
     vars:
-      query: What is minimum starting investment?
+      query: What gives you energy for the day?
     assert:
-      - type: contains
-        value: 25
+      - type: icontains
+        value: Elixir
       - type: context-faithfulness
         threshold: 0.9

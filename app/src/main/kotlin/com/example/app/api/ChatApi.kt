@@ -2,7 +2,7 @@ package com.example.app.api
 
 import com.example.app.Generators.randomSessionId
 import com.example.app.SessionId
-import com.example.app.agents.FinancialAgent
+import com.example.app.agents.ElvenAgent
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @RestController
 class ChatApi(
-    val agent: FinancialAgent,
+    val agent: ElvenAgent,
 ) {
     private val logger = LoggerFactory.getLogger(ChatApi::class.java)
 
@@ -31,7 +31,7 @@ class ChatApi(
     ): Answer {
         logger.info("Received chat request: {}", request)
         val sessionId = request.sessionId ?: randomSessionId()
-        val reply = agent.giveAdvice(request.message)
+        val reply = agent.giveAdvice(sessionId = sessionId, input = request.message)
         return Answer(message = reply, sessionId = sessionId)
     }
 

@@ -15,6 +15,19 @@ class AiChatIntegrationTest : AbstractIntegrationTest() {
             val question = "To be or not to be, $seed?"
             val expectedAnswer = """It's a good question: "$question""""
 
+            mockOpenai.moderation {
+                inputContains(question)
+            } responds {
+                flagged = false
+            }
+
+            mockOpenai.completion {
+                systemMessageContains { "You're an efficient and smart financial assistant" }
+                userMessageContains { question }
+            } responds {
+                assistantContent = expectedAnswer
+            }
+
             mockOpenai.completion {
                 systemMessageContains { "You're an efficient and smart financial assistant" }
                 userMessageContains { question }

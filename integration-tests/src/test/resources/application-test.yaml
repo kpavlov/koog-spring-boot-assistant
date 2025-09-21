@@ -1,0 +1,9 @@
+ai:
+    koog:
+        rag:
+            knowledge-base:
+                path: "./../app/data/knowledge"
+
+logging:
+    level:
+        "com.example.app": trace

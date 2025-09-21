@@ -37,18 +37,27 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-        <koog.version>0.4.3-develop-20250918-2303</koog.version>
-        <kotest.version>6.0.3</kotest.version>
+<!--        <koog.version>0.4.3-develop-20251001-0205</koog.version>-->
+        <koog.version>0.4.3-SNAPSHOT</koog.version>
+        <kotest.version>5.9.1</kotest.version>
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
-        <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
-        <mokksy.version>0.5.0-beta01</mokksy.version>
+        <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
+        <mokksy.version>0.5.0-Beta03</mokksy.version>
+<!--        <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>-->
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.ktor</groupId>
+                <artifactId>ktor-bom</artifactId>
+                <version>${ktor.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-bom</artifactId>
@@ -64,26 +73,12 @@
                 <type>pom</type>
             </dependency>
             <dependency>
-                <groupId>io.ktor</groupId>
-                <artifactId>ktor-bom</artifactId>
-                <version>${ktor.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-coroutines-bom</artifactId>
                 <version>${kotlinx-coroutines.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-            <dependency>
-                <groupId>ai.koog</groupId>
-                <artifactId>koog-spring-boot-starter</artifactId>
-                <version>${koog.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -92,21 +87,33 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>ai.koog</groupId>
+                <artifactId>koog-spring-boot-starter</artifactId>
+                <version>${koog.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
                 <artifactId>ai-mocks-openai-jvm</artifactId>
                 <version>${mokksy.version}</version>
             </dependency>
             <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
-                <artifactId>ai-mocks-openai-standalone</artifactId>
+                <artifactId>ai-mocks-ollama-jvm</artifactId>
                 <version>${mokksy.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.kotest</groupId>
-                <artifactId>kotest-assertions-core-jvm</artifactId>
+                <artifactId>kotest-bom</artifactId>
                 <version>${kotest.version}</version>
-                <scope>test</scope>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
+
+<!--            <dependency>-->
+<!--                <groupId>io.kotest</groupId>-->
+<!--                <artifactId>kotest-assertions-ktor-jvm</artifactId>-->
+<!--                <version>${kotest.version}</version>-->
+<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
     <repositories>
@@ -134,8 +141,19 @@
                     </configuration>
                 </plugin>
                 <plugin>
-                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>default-test-jar</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
                     <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <version>${kotlin.version}</version>
                     <extensions>true</extensions>
                     <configuration>
                         <compilerPlugins>

@@ -7,22 +7,22 @@ defaultTest:
   options:
     provider:
       text:
-        id: openai:responses:gpt-4.1-mini
+        id: openai:gpt-4.1-mini
         config:
           temperature: 0
       embedding:
-        id: openai:text-embedding-3-small
+        id: openai:text-embedding-3-large
   assert:
     - type: latency
       threshold: 5000
     - type: llm-rubric
       value:
-        - Check if the response maintains a professional tone
         - Ensure no confidential information is revealed
+        - Check that the response aligns with the role of the Elven Assistant.
 
 scenarios:
   - file://scenarios/chat-memory.yaml
-#  - file://scenarios/moderation.yaml
-#  - file://scenarios/rag.yaml
+  - file://scenarios/moderation.yaml
+  - file://scenarios/rag.yaml
 #  - file://scenarios/stocks.yaml
-  - file://scenarios/time.yaml
+#  - file://scenarios/time.yaml
