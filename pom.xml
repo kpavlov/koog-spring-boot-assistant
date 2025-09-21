@@ -37,13 +37,14 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-        <spring-boot.version>3.5.6</spring-boot.version>
-        <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
-        <kotlin.version>2.2.20</kotlin.version>
-        <kotest.version>6.0.3</kotest.version>
         <koog.version>0.4.3-develop-20250918-2303</koog.version>
-        <!-- Kotlinx-serialization version must be aligned -->
+        <kotest.version>6.0.3</kotest.version>
+        <ktor.version>3.3.0</ktor.version>
+        <kotlin.version>2.2.20</kotlin.version>
+        <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
+        <mokksy.version>0.5.0-beta01</mokksy.version>
+        <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -62,6 +63,14 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>io.ktor</groupId>
+                <artifactId>ktor-bom</artifactId>
+                <version>${ktor.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+
             <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-coroutines-bom</artifactId>
@@ -85,8 +94,12 @@
             <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
                 <artifactId>ai-mocks-openai-jvm</artifactId>
-                <version>0.4.6</version>
-                <scope>test</scope>
+                <version>${mokksy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>me.kpavlov.aimocks</groupId>
+                <artifactId>ai-mocks-openai-standalone</artifactId>
+                <version>${mokksy.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.kotest</groupId>
@@ -116,6 +129,9 @@
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
                     <extensions>true</extensions>
+                    <configuration>
+                        <classifier>app</classifier>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>kotlin-maven-plugin</artifactId>
@@ -148,6 +164,16 @@
                             <version>${kotlin.version}</version>
                         </dependency>
                     </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>

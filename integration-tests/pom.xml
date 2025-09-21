@@ -20,8 +20,38 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+            <groupId>me.kpavlov.aimocks</groupId>
+            <artifactId>ai-mocks-openai-standalone</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility-kotlin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-test-jvm</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.kotest</groupId>
+            <artifactId>kotest-assertions-core-jvm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-content-negotiation-jvm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-core-jvm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-java-jvm</artifactId>
         </dependency>
     </dependencies>
 

@@ -7,6 +7,7 @@ ai:
 logging:
     level:
         "org.springframework.web": debug
+        "ai.koog": debug
 
 server:
     shutdown: immediate

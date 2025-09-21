@@ -1,8 +1,8 @@
 package com.example.app.api
 
+import com.example.app.Generators.randomSessionId
 import com.example.app.SessionId
 import com.example.app.agents.FinancialAgent
-import com.example.app.randomSessionId
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType

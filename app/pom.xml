@@ -44,7 +44,6 @@
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-logging</artifactId>
         </dependency>
-
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
@@ -68,6 +67,14 @@
     </dependencies>
 
     <build>
+        <!--<resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+        </resources>-->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
