@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+    title: Chat API
+    description: REST API for chat interactions with an AI agent
+    version: 1.0.0
+servers:
+    -   url: http://localhost:8080
+        description: Local development server
+paths:
+    /api/version:
+        get:
+            summary: Get API version
+            description: Returns the current version of the API
+            operationId: getVersion
+            tags:
+                - chat
+            responses:
+                '200':
+                    description: API version
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: "1.0"
+    /api/chat:
+        post:
+            summary: Send a chat message
+            description: Sends a message to the AI agent and receives a response
+            operationId: chat
+            tags:
+                - chat
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatRequest'
+            responses:
+                '200':
+                    description: Chat response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Answer'
+components:
+    schemas:
+        ChatRequest:
+            type: object
+            required:
+                - message
+            properties:
+                message:
+                    type: string
+                    description: The message to send to the AI agent
+                    example: "How do I implement a REST API in Spring Boot?"
+                sessionId:
+                    type: string
+                    description: Optional session identifier for maintaining conversation context
+                    nullable: true
+                    example: "abc123"
+        Answer:
+            type: object
+            required:
+                - message
+                - sessionId
+            properties:
+                message:
+                    type: string
+                    description: The AI agent's response
+                    example: "To implement a REST API in Spring Boot, you can use @RestController..."
+                sessionId:
+                    type: string
+                    description: Session identifier for the conversation
+                    example: "abc123"

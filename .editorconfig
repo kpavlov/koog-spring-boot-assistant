@@ -22,3 +22,4 @@ ij_kotlin_packages_to_use_import_on_demand = unset
 
 [{*.yml,yaml}]
 indent_size = 2
+tab_width = 2
