@@ -8,7 +8,7 @@ kotlinxDatetime = "0.6.2"
 kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 koog = "0.4.1-develop-2025-09-14"
-spring-boot="3.5.5"
+spring-boot="3.5.6"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
