@@ -1,6 +1,6 @@
 
 .PHONY: build
-build:
+build: clean
 	mvn package
 
 .PHONY: test

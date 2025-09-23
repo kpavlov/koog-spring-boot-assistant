@@ -42,13 +42,20 @@
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
-        <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
-        <mokksy.version>0.5.0-beta01</mokksy.version>
+        <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
+        <mokksy.version>0.5.0-Beta02</mokksy.version>
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.ktor</groupId>
+                <artifactId>ktor-bom</artifactId>
+                <version>${ktor.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-bom</artifactId>
@@ -64,26 +71,12 @@
                 <type>pom</type>
             </dependency>
             <dependency>
-                <groupId>io.ktor</groupId>
-                <artifactId>ktor-bom</artifactId>
-                <version>${ktor.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-coroutines-bom</artifactId>
                 <version>${kotlinx-coroutines.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-            <dependency>
-                <groupId>ai.koog</groupId>
-                <artifactId>koog-spring-boot-starter</artifactId>
-                <version>${koog.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -92,13 +85,18 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>ai.koog</groupId>
+                <artifactId>koog-spring-boot-starter</artifactId>
+                <version>${koog.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
                 <artifactId>ai-mocks-openai-jvm</artifactId>
                 <version>${mokksy.version}</version>
             </dependency>
             <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
-                <artifactId>ai-mocks-openai-standalone</artifactId>
+                <artifactId>ai-mocks-ollama-jvm</artifactId>
                 <version>${mokksy.version}</version>
             </dependency>
             <dependency>
@@ -134,8 +132,19 @@
                     </configuration>
                 </plugin>
                 <plugin>
-                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>default-test-jar</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
                     <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <version>${kotlin.version}</version>
                     <extensions>true</extensions>
                     <configuration>
                         <compilerPlugins>
