@@ -5,12 +5,19 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.entity.ToolSelectionStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.nodeLLMModerateMessage
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.features.opentelemetry.feature.OpenTelemetry
+import ai.koog.agents.features.tracing.feature.Tracing
+import ai.koog.agents.features.tracing.writer.TraceFeatureMessageLogWriter
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
 import org.slf4j.LoggerFactory
 import org.springframework.boot.info.BuildProperties
@@ -23,6 +30,7 @@ class FinancialAgent(
     private val buildProps: BuildProperties,
 ) {
     private val log = LoggerFactory.getLogger(FinancialAgent::class.java)
+    private val kotlinLogger = KotlinLogging.logger(name = "FinancialAgent")
 
     private val systemPrompt =
         FinancialAgent::class.java.getResource("/prompts/financial-agent/system.md")!!.readText()
@@ -37,10 +45,31 @@ class FinancialAgent(
             name = "test-strategy",
             toolSelectionStrategy = ToolSelectionStrategy.NONE, // TODO: fix mokkcy
         ) {
-            val nodeSendInput by nodeLLMRequest("test-llm-call")
+            val callLLM by nodeLLMRequest("test-llm-call")
 
-            edge(nodeStart forwardTo nodeSendInput)
-            edge(nodeSendInput forwardTo nodeFinish onAssistantMessage { true })
+            val moderateInput by nodeLLMModerateMessage(
+                moderatingModel = OpenAIModels.Moderation.Omni,
+            )
+
+            edge(
+                nodeStart forwardTo moderateInput transformed {
+                    Message.User(it, metaInfo = RequestMetaInfo.Empty)
+                },
+            )
+
+            edge(
+                moderateInput forwardTo callLLM
+                    onCondition { !it.moderationResult.isHarmful }
+                    transformed { it.message.content },
+            )
+
+            edge(
+                moderateInput forwardTo nodeFinish
+                    onCondition { it.moderationResult.isHarmful }
+                    transformed { "Sorry, your message couldn't be processed due to content guidelines." },
+            )
+
+            edge(callLLM forwardTo nodeFinish onAssistantMessage { true })
         }
 
     suspend fun giveAdvice(input: String): String {
@@ -56,9 +85,12 @@ class FinancialAgent(
                     // Configuration options here
                     setVerbose(true)
                     spanExporters.forEach {
-                        // TODO: does it work?
                         addSpanExporter(it)
                     }
+                }
+                install(Tracing) {
+                    // Configure message processors to handle trace events
+                    addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
                 }
             }
 
