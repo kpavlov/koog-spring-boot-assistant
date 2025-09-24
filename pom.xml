@@ -43,7 +43,7 @@
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-        <mokksy.version>0.5.0-Beta03</mokksy.version>
+        <mokksy.version>0.5.0-Aplha2</mokksy.version>
 <!--        <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>-->
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
