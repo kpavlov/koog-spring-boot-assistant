@@ -76,7 +76,7 @@ class FinancialAgent(
         val agent =
             AIAgent(
                 promptExecutor = promptExecutor,
-                agentConfig = AIAgentConfig.withSystemPrompt(systemPrompt),
+                agentConfig = AIAgentConfig.withSystemPrompt(systemPrompt, maxAgentIterations = 10),
                 strategy = strategy,
                 toolRegistry = tools,
             ) {
