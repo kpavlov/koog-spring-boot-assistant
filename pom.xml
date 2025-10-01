@@ -38,7 +38,7 @@
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
 <!--        <koog.version>0.4.3-develop-20251001-0205</koog.version>-->
-        <koog.version>0.4.3-SNAPSHOT</koog.version>
+        <koog.version>0.4.3-develop-20251001-0205</koog.version>
         <kotest.version>5.9.1</kotest.version>
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
