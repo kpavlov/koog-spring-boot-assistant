@@ -23,13 +23,11 @@
             <id>kpavlov</id>
             <name>Konstantin Pavlov</name>
             <url>https://kpavlov.me</url>
-            <organization>JetBrains</organization>
-            <organizationUrl>https://www.jetbrains.com</organizationUrl>
         </developer>
     </developers>
     <scm>
-        <url>https://github.com/ai-testing-challenges.git</url>
-        <connection>git@github.com:kpavlov/ai-testing-challenges.git</connection>
+        <url>https://github.com/kpavlov/koog-spring-boot-assistant.git</url>
+        <connection>git@github.com:kpavlov/koog-spring-boot-assistant.git</connection>
     </scm>
     <properties>
         <java.version>21</java.version>
@@ -37,15 +35,15 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-<!--        <koog.version>0.4.3-develop-20251001-0205</koog.version>-->
-        <koog.version>0.4.3-SNAPSHOT</koog.version>
+        <koog.version>0.4.3-develop-20251002-0832</koog.version>
+<!--        <koog.version>0.4.3-SNAPSHOT</koog.version>-->
         <kotest.version>5.9.1</kotest.version>
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-        <mokksy.version>0.5.0-Beta03</mokksy.version>
-<!--        <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>-->
+<!--        <mokksy.version>0.5.0-Beta03</mokksy.version>-->
+        <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
 

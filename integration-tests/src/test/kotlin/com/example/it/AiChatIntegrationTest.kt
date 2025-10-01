@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
+import kotlin.time.Duration.Companion.milliseconds
 
 class AiChatIntegrationTest : AbstractIntegrationTest() {
     @Test
@@ -15,6 +16,12 @@ class AiChatIntegrationTest : AbstractIntegrationTest() {
             val question = "To be or not to be, $seed?"
             val expectedAnswer = """It's a good question: "$question""""
 
+            mockOpenai.embeddings {
+                stringInput(question)
+            } responds {
+                delay = 20.milliseconds
+            }
+
             mockOpenai.moderation {
                 inputContains(question)
             } responds {
@@ -22,15 +29,8 @@ class AiChatIntegrationTest : AbstractIntegrationTest() {
             }
 
             mockOpenai.completion {
-                systemMessageContains { "You're an efficient and smart financial assistant" }
-                userMessageContains { question }
-            } responds {
-                assistantContent = expectedAnswer
-            }
-
-            mockOpenai.completion {
-                systemMessageContains { "You're an efficient and smart financial assistant" }
-                userMessageContains { question }
+                systemMessageContains("Elven assistant")
+                userMessageContains(question)
             } responds {
                 assistantContent = expectedAnswer
             }
