@@ -35,14 +35,14 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-        <koog.version>0.4.3-develop-20251002-0832</koog.version>
-<!--        <koog.version>0.4.3-SNAPSHOT</koog.version>-->
+        <!-- <koog.version>0.4.3-develop-20251002-0832</koog.version> -->
+        <koog.version>0.5.0-rc</koog.version>
         <kotest.version>5.9.1</kotest.version>
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-<!--        <mokksy.version>0.5.0-Beta03</mokksy.version>-->
+        <!-- <mokksy.version>0.5.0-Beta03</mokksy.version>-->
         <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
@@ -106,12 +106,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-<!--            <dependency>-->
-<!--                <groupId>io.kotest</groupId>-->
-<!--                <artifactId>kotest-assertions-ktor-jvm</artifactId>-->
-<!--                <version>${kotest.version}</version>-->
-<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
     <repositories>

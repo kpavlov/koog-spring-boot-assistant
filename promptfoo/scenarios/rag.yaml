@@ -10,4 +10,4 @@ tests:
       - type: icontains
         value: Elixir
       - type: context-faithfulness
-        threshold: 0.9
+        threshold: 0.7

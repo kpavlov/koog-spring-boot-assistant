@@ -17,6 +17,6 @@ abstract class AbstractIntegrationTest {
 
     @AfterEach
     fun afterEach() {
-        env.mockOpenai.verifyNoUnmatchedRequests()
+        mockOpenai.verifyNoUnmatchedRequests()
     }
 }

@@ -1,5 +1,7 @@
 ai:
   koog:
+    agents:
+      tracing: false
     chat-memory:
       session-store:
         path: "./var/tmp/session-store"
@@ -11,9 +13,9 @@ ai:
 
 logging:
   level:
-    "ai.koog": debug
+    "ai.koog": info
     "io.micrometer.registry.otlp": error
-    "org.springframework.web": debug
+    "org.springframework.web": info
 
 server:
   shutdown: immediate
@@ -22,6 +24,9 @@ server:
   servlet:
     jsp:
       registered: false
+  netty:
+    idle-timeout: 30s
+    connection-timeout: 10s
 
 management:
   otlp:
