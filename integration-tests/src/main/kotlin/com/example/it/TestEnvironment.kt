@@ -15,5 +15,6 @@ object TestEnvironment {
         Awaitility.setDefaultPollInterval(500.milliseconds.toJavaDuration())
 
         System.setProperty("OPENAI_API_KEY", "dummyOpenAIKey")
+        System.setProperty("spring.profiles.active", "test")
     }
 }
