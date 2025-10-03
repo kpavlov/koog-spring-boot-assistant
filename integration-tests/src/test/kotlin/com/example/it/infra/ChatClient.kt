@@ -34,6 +34,14 @@ class ChatClient(
         return response.bodyAsText()
     }
 
+    suspend fun healthy(): Boolean {
+        val response =
+            client.get("http://localhost:$port/actuator/health") {
+                accept(ContentType.Text.Plain)
+            }
+        return response.status == HttpStatusCode.OK
+    }
+
     suspend fun sendMessage(message: String): Answer {
         val response =
             client.post("http://localhost:$port/api/chat") {

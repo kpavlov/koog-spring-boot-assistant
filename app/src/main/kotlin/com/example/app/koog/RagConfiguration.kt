@@ -1,4 +1,4 @@
-package com.example.app.agents
+package com.example.app.koog
 
 import ai.koog.embeddings.local.LLMEmbedder
 import ai.koog.prompt.executor.clients.LLMEmbeddingProvider
@@ -8,7 +8,6 @@ import ai.koog.rag.vector.JVMFileDocumentEmbeddingStorage
 import ai.koog.rag.vector.JVMFileVectorStorage
 import ai.koog.rag.vector.JVMTextDocumentEmbedder
 import ai.koog.rag.vector.VectorStorage
-import com.example.app.koog.storeAll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger

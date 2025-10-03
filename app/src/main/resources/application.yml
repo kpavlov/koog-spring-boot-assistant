@@ -30,11 +30,19 @@ server:
     idle-timeout: 30s
     connection-timeout: 10s
 
+
 management:
   otlp:
     metrics:
       export:
         step: 3s
+
+  endpoint:
+    health:
+      probes:
+        enabled: true
+        ## https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes
+        add-additional-paths: true
 spring:
   application:
     name: ${build.name}

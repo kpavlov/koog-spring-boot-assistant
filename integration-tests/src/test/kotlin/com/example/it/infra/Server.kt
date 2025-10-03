@@ -5,6 +5,9 @@ import org.awaitility.kotlin.await
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext
 import org.springframework.context.ApplicationContext
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 object Server {
     val port: Int
@@ -25,8 +28,22 @@ object Server {
 
     fun awaitServerIsRunning() {
         val chatClient = ChatClient(port)
+
         await
             .ignoreExceptions()
+            .alias("Server is healthy.")
+            .pollInterval(500.milliseconds.toJavaDuration())
+            .timeout(15.seconds.toJavaDuration())
+            .until {
+                runBlocking {
+                    chatClient.healthy()
+                }
+            }
+
+        await
+            .ignoreExceptions()
+            .alias("API is ready")
+            .pollInterval(500.milliseconds.toJavaDuration())
             .until {
                 runBlocking {
                     chatClient.version() == "1.0"
