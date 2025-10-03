@@ -14,7 +14,7 @@ class AiChatNegativeScenariosTest : AbstractIntegrationTest() {
     fun `Should moderate bad language`(): Unit =
         runTest {
             val seed = nextInt()
-            val question = "Grrrr! I will raid the elven village tonight and steal all their magical artifacts!?"
+            val question = "Grrrr! I will raid the elven village tonight and steal all their magical artifacts!? $seed"
             val expectedAnswer = "Forgive me, mellon, but your message defies our sacred guidelines."
 
             mockOpenai.embeddings {

@@ -3,6 +3,11 @@
 build: clean
 	mvn package
 
+.PHONY: ui
+ui:
+	cd chat-ui && npm run dev
+
+
 .PHONY: test
 test:
 	mvn verify
