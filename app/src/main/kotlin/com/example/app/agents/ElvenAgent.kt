@@ -3,7 +3,6 @@ package com.example.app.agents
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.RollbackStrategy
-import ai.koog.agents.core.agent.entity.ToolSelectionStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.dsl.extension.nodeLLMModerateMessage
@@ -17,6 +16,7 @@ import ai.koog.agents.features.tracing.writer.TraceFeatureMessageLogWriter
 import ai.koog.agents.snapshot.feature.Persistence
 import ai.koog.agents.snapshot.providers.PersistenceStorageProvider
 import ai.koog.prompt.dsl.AttachmentBuilder
+import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.PromptExecutor
@@ -67,14 +67,12 @@ class ElvenAgent(
     private val strategy =
         strategy(
             name = "test-strategy",
-            toolSelectionStrategy = ToolSelectionStrategy.NONE, // TODO: support tools
         ) {
-            val callLLM by nodeLLMRequest("llm-call")
-
             val moderateInput by nodeLLMModerateMessage(
                 name = "moderate-input",
                 moderatingModel = OpenAIModels.Moderation.Omni,
             )
+            val callLLM by nodeLLMRequest("llm-call")
 
             edge(
                 nodeStart forwardTo moderateInput transformed {
@@ -121,20 +119,7 @@ class ElvenAgent(
                     agentConfig =
                         AIAgentConfig(
                             prompt =
-                                prompt("with-context") {
-                                    system(systemPrompt)
-                                    if (relevantDocuments.isNotEmpty()) {
-                                        user {
-                                            +"User's input: ```$input```."
-                                            +"Use attachment as relevant context"
-                                            attachments {
-                                                relevantDocuments.forEach {
-                                                    createAttachmentFromFile(path = it)
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
+                                createPrompt(systemPrompt, input, relevantDocuments),
                             model = OpenAIModels.CostOptimized.GPT4_1Mini,
                             maxAgentIterations = 100,
                         ),
@@ -173,6 +158,26 @@ class ElvenAgent(
         } catch (e: Exception) {
             log.error("Error processing request", e)
             systemErrorResponse
+        }
+
+    private fun createPrompt(
+        systemPrompt: String,
+        input: String,
+        relevantDocuments: List<Path>,
+    ): Prompt =
+        prompt("with-context") {
+            system(systemPrompt)
+            user {
+                +"User's input: ```$input```."
+                if (relevantDocuments.isNotEmpty()) {
+                    +"Use attachment as relevant context"
+                    attachments {
+                        relevantDocuments.forEach {
+                            createAttachmentFromFile(path = it)
+                        }
+                    }
+                }
+            }
         }
 }
 
