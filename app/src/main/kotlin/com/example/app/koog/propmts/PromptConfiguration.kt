@@ -1,4 +1,4 @@
-package com.example.app.koog
+package com.example.app.koog.propmts
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

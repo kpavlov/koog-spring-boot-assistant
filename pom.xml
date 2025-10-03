@@ -31,6 +31,8 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
@@ -41,9 +43,10 @@
         <ktor.version>3.3.0</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
-        <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
+        <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
         <mokksy.version>0.5.0</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
+        <netty.version>4.2.6.Final</netty.version>
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
 
@@ -76,6 +79,13 @@
                 <version>${kotlinx-coroutines.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -114,6 +124,13 @@
         <repository>
             <id>grazie-platform-public</id>
             <url>https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public</url>
+            <releases>
+                <!-- enable for nightly koog -->
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
     <modules>

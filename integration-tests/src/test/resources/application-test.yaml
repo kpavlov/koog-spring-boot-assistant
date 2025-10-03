@@ -8,6 +8,12 @@ ai:
 
 logging:
     level:
+        "ai.koog": debug
+        # "ai.koog.agents.core.agent.GraphAIAgent": off
         "com.example.app": trace
-        "ai.koog.agents.core.agent.GraphAIAgent": off
-        "ai.koog.agents": warn
+
+management:
+    otlp:
+        tracing:
+            export:
+                enabled: off

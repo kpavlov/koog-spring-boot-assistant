@@ -14,7 +14,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
     fun `Should handle embedding request failure`(): Unit =
         runTest {
             val seed = nextInt()
-            val question = "To be or not to be, $seed?"
+            val question = "RAG should fail, $seed?"
             val expectedAnswer = "Alas, I cannot help thee now, mellon."
 
             mockOpenai.moderation {
@@ -26,7 +26,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
             mockOpenai.embeddings {
                 stringInput(question)
             } respondsError {
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatus = HttpStatusCode.ServiceUnavailable
                 body = ""
                 delay = 42.milliseconds
             }
@@ -43,7 +43,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
     fun `Should handle moderation request failure`(): Unit =
         runTest {
             val seed = nextInt()
-            val question = "To be or not to be, $seed?"
+            val question = "Moderation should fail, $seed?"
             val expectedAnswer = "Alas, I cannot help thee now, mellon."
 
             mockOpenai.embeddings {
@@ -56,7 +56,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 inputContains(question)
             } respondsError {
                 body = ""
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatus = HttpStatusCode.ServiceUnavailable
             }
 
             val response = chatClient.sendMessage(question)
