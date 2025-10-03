@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-cio-jvm</artifactId>
+            <artifactId>ktor-server-netty-jvm</artifactId>
             <scope>runtime</scope>
         </dependency>
     </dependencies>
