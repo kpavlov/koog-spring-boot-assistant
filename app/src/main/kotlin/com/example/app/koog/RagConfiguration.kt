@@ -3,8 +3,10 @@ package com.example.app.koog
 import ai.koog.embeddings.local.LLMEmbedder
 import ai.koog.prompt.executor.clients.LLMEmbeddingProvider
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.rag.base.DocumentStorage
 import ai.koog.rag.base.RankedDocumentStorage
-import ai.koog.rag.vector.JVMFileDocumentEmbeddingStorage
+import ai.koog.rag.vector.EmbeddingBasedDocumentStorage
+import ai.koog.rag.vector.InMemoryVectorStorage
 import ai.koog.rag.vector.JVMFileVectorStorage
 import ai.koog.rag.vector.JVMTextDocumentEmbedder
 import ai.koog.rag.vector.VectorStorage
@@ -17,8 +19,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 
 @Configuration
 class RagConfiguration {
@@ -38,12 +38,9 @@ class RagConfiguration {
     fun vectorStorage(): VectorStorage<Path> = JVMFileVectorStorage(Path("./data/knowledge"))
 
     @Bean
-    fun rankedDocumentStorage(documentEmbedder: LLMEmbedder): RankedDocumentStorage<Path> {
-        val storage =
-            JVMFileDocumentEmbeddingStorage(
-                JVMTextDocumentEmbedder(documentEmbedder),
-                embeddingStorePath,
-            )
+    fun rankedDocumentStorage(embedder: LLMEmbedder): RankedDocumentStorage<Path> {
+        val documentEmbedder = JVMTextDocumentEmbedder(embedder)
+        val storage = EmbeddingBasedDocumentStorage(documentEmbedder, InMemoryVectorStorage())
 
         initDocumentStorage(embeddingStorePath = embeddingStorePath, storage = storage)
         return storage
@@ -51,21 +48,20 @@ class RagConfiguration {
 
     private fun initDocumentStorage(
         embeddingStorePath: Path,
-        storage: JVMFileDocumentEmbeddingStorage,
+        storage: DocumentStorage<Path>,
     ) {
-        if (!embeddingStorePath.exists()) {
-            embeddingStorePath.createDirectories()
-            logger.info("Initializing JVMFileDocumentEmbeddingStorage: ${embeddingStorePath.toAbsolutePath()}")
-            runBlocking(Dispatchers.IO) {
-                storage
-                    .storeAll(knowledgeBasePath)
-
-                storage
-                    .allDocuments()
-                    .collect {
-                        logger.info("Stored document: ${it.toFile().absoluteFile}")
-                    }
+        logger.info("Initializing ${storage::class.simpleName}: ${embeddingStorePath.toAbsolutePath()}")
+        runBlocking(Dispatchers.IO) {
+            knowledgeBasePath.toFile().listFiles()?.forEach { file ->
+                logger.info("Adding file: ${file.absolutePath}")
+                storage.store(file.toPath())
             }
+
+            storage
+                .allDocuments()
+                .collect {
+                    logger.info("Stored document: ${it.toAbsolutePath()}")
+                }
         }
     }
 }

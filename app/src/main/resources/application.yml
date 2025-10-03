@@ -41,8 +41,8 @@ management:
     health:
       probes:
         enabled: true
-        ## https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes
-        add-additional-paths: true
+#        ## https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes
+#        add-additional-paths: true
 spring:
   application:
     name: ${build.name}

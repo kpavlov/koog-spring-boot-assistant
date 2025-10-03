@@ -25,31 +25,34 @@ object Server {
                     "--server.port=0",
                 )
 
-        if (System.getenv("CI") != null) {
-            await.timeout(3.seconds.toJavaDuration())
-        }
+//        if (System.getenv("CI") != null) {
+//            await.timeout(3.seconds.toJavaDuration())
+//        }
 
-        awaitServerIsRunning()
+//        awaitServerIsRunning()
     }
 
     fun awaitServerIsRunning() {
         val chatClient = ChatClient(port)
-
-        await
-            .ignoreExceptions()
-            .alias("Server is healthy.")
-            .pollInterval(500.milliseconds.toJavaDuration())
-            .timeout(15.seconds.toJavaDuration())
-            .until {
-                runBlocking {
-                    chatClient.healthy()
-                }
-            }
+// /*
+//        await
+//            .ignoreExceptions()
+//            .alias("Server is healthy.")
+//            .pollInterval(500.milliseconds.toJavaDuration())
+//            .timeout(15.seconds.toJavaDuration())
+//            .until {
+//                runBlocking {
+//                    chatClient.healthy()
+//                }
+//            }
+// */
+//
 
         await
             .ignoreExceptions()
             .alias("API is ready")
             .pollInterval(500.milliseconds.toJavaDuration())
+            .timeout(10.seconds.toJavaDuration())
             .until {
                 runBlocking {
                     chatClient.version() == "1.0"

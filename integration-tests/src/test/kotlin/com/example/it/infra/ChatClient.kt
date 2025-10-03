@@ -39,6 +39,7 @@ class ChatClient(
             client.get("http://localhost:$port/actuator/health") {
                 accept(ContentType.Text.Plain)
             }
+        println("XXXX" + response.bodyAsText())
         return response.status == HttpStatusCode.OK
     }
 
@@ -53,7 +54,6 @@ class ChatClient(
                 )
             }
 
-//        response shouldHaveStatus HttpStatusCode.OK
         response.status shouldBe HttpStatusCode.OK
 
         return response.body()
