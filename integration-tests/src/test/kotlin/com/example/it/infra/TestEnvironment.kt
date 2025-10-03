@@ -2,6 +2,7 @@ package com.example.it
 
 import me.kpavlov.aimocks.openai.MockOpenai
 import org.awaitility.Awaitility
+import org.awaitility.kotlin.await
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -18,6 +19,10 @@ object TestEnvironment {
         System.setProperty("spring.profiles.active", "test")
 
         prepareForRagIngestion()
+
+        if (System.getenv("CI") != null) {
+            await.timeout(5.seconds.toJavaDuration())
+        }
     }
 
     private fun prepareForRagIngestion() {
@@ -31,7 +36,7 @@ object TestEnvironment {
             mockOpenai.embeddings {
                 inputContains(it)
             } responds {
-                this.delay = 1.milliseconds
+                // no need for special setup
             }
         }
     }
