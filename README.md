@@ -1,6 +1,7 @@
 # Koog Spring-Boot Assistant Demo
 
 [![Java CI with Maven](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml)
+[![Node.js CI](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml)
 
 This repository contains a Kotlin/Spring Boot application (module: `app`) and supporting tooling for evaluating LLM prompts. This document explains how to set up your environment, build the project with Maven, run the app, and use the included Makefile tasks for observability and prompt evaluation.
 
