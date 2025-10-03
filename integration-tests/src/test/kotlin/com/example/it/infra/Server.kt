@@ -24,6 +24,12 @@ object Server {
                     com.example.app.Application::class.java,
                     "--server.port=0",
                 )
+
+        if (System.getenv("CI") != null) {
+            await.timeout(3.seconds.toJavaDuration())
+        }
+
+        awaitServerIsRunning()
     }
 
     fun awaitServerIsRunning() {

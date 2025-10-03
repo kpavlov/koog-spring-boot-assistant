@@ -19,10 +19,6 @@ object TestEnvironment {
         System.setProperty("spring.profiles.active", "test")
 
         prepareForRagIngestion()
-
-        if (System.getenv("CI") != null) {
-            await.timeout(5.seconds.toJavaDuration())
-        }
     }
 
     private fun prepareForRagIngestion() {
