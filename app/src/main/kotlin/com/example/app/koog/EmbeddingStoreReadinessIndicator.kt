@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 
-// @Component
+@Component
 internal class EmbeddingStoreReadinessIndicator(
     private val storage: DocumentStorage<Path>,
     @Value("\${ai.koog.rag.knowledge-base.path}")
