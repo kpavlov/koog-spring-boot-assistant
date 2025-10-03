@@ -21,7 +21,7 @@
         </dependency>
         <dependency>
             <groupId>me.kpavlov.aimocks</groupId>
-            <artifactId>ai-mocks-openai-standalone</artifactId>
+            <artifactId>ai-mocks-openai-jvm</artifactId>
             <version>${mokksy.version}</version>
             <scope>test</scope>
         </dependency>
@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-netty-jvm</artifactId>
+            <artifactId>ktor-server-cio-jvm</artifactId>
             <scope>runtime</scope>
         </dependency>
     </dependencies>
