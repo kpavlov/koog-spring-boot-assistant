@@ -1,4 +1,4 @@
-package com.example.app.koog
+package com.example.app.koog.propmts
 
 interface PromptTemplateProvider {
     fun getPromptTemplate(

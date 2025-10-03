@@ -27,7 +27,7 @@ import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
 import com.example.app.SessionId
-import com.example.app.koog.PromptTemplateProvider
+import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
 import org.slf4j.LoggerFactory

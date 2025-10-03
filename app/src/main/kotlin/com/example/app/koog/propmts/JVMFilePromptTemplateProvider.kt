@@ -1,4 +1,4 @@
-package com.example.app.koog
+package com.example.app.koog.propmts
 
 import kotlinx.io.IOException
 import org.slf4j.Logger
