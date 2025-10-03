@@ -38,10 +38,11 @@
         <!-- <koog.version>0.4.3-develop-20251002-0832</koog.version> -->
         <koog.version>0.5.0</koog.version>
         <kotest.version>5.9.1</kotest.version>
-        <ktor.version>3.3.0</ktor.version>
+        <ktor.version>3.2.3</ktor.version>
         <kotlin.version>2.2.20</kotlin.version>
+        <netty.version>4.2.6.Final</netty.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
-        <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
+        <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
         <mokksy.version>0.5.0</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
         <spring-boot.version>3.5.6</spring-boot.version>
@@ -76,6 +77,31 @@
                 <version>${kotlinx-coroutines.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-epoll</artifactId>
+                <version>${netty.version}</version>
+                <classifier>linux-x86_64</classifier>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-kqueue</artifactId>
+                <version>${netty.version}</version>
+                <classifier>osx-x86_64</classifier>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-kqueue</artifactId>
+                <version>${netty.version}</version>
+                <classifier>osx-aarch_64</classifier>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -114,6 +140,13 @@
         <repository>
             <id>grazie-platform-public</id>
             <url>https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public</url>
+            <releases>
+                <!-- enable for nightly koog -->
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
     <modules>
