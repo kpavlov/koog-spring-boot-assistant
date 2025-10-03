@@ -2,6 +2,8 @@
   import { onMount, afterUpdate } from 'svelte';
   import { Send, Bot, User, Loader2 } from 'lucide-svelte';
   import { sendChatMessage, getApiVersion, ApiError } from './lib/api';
+  import { sessionId } from './lib/session';
+  import { marked } from 'marked';
 
   interface Message {
     id: string;
@@ -13,7 +15,7 @@
   let messages: Message[] = [
     {
       id: '1',
-      text: 'Hello! I\'m your AI assistant. How can I help you today?',
+      text: 'Hello! I\'m your Elven Assistant. How can I help you today?',
       isUser: false,
       timestamp: new Date()
     }
@@ -22,14 +24,37 @@
   let currentMessage = '';
   let isLoading = false;
   let chatContainer: HTMLElement;
-  let messageInput: HTMLInputElement;
-  let sessionId: string | null = null;
+  let messageInput: HTMLTextAreaElement;
+  let currentSessionId: string;
+
+  // Configure marked options
+  marked.setOptions({
+    breaks: true,
+    gfm: true
+  });
+
+  // Render markdown to HTML
+  function renderMarkdown(text: string): string {
+    return marked.parse(text) as string;
+  }
 
   // Auto-scroll functionality
   function scrollToBottom() {
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+  }
+
+  // Auto-resize textarea
+  function resizeTextarea() {
+    if (messageInput) {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = messageInput.scrollHeight + 'px';
+    }
+  }
+
+  $: if (currentMessage !== undefined) {
+    resizeTextarea();
   }
 
   afterUpdate(() => {
@@ -69,25 +94,29 @@
     try {
       const response = await sendChatMessage({
         message: messageText,
-        sessionId: sessionId
+        sessionId: currentSessionId
       });
-      
+
       clearTimeout(timeout);
-      
-      // Update sessionId from response
-      sessionId = response.sessionId;
-      
+
+      // Update sessionId from response if server provides a new one
+      if (response.sessionId && response.sessionId !== currentSessionId) {
+        sessionId.update(response.sessionId);
+      }
+
       // Update the loading message with the actual response
-      messages = messages.map(msg => 
-        msg.id === loadingMessageId 
+      messages = messages.map(msg =>
+        msg.id === loadingMessageId
           ? { ...msg, text: response.message, timestamp: new Date() }
           : msg
       );
-      
+
       isLoading = false;
-      
+
       // Focus input field after receiving response
-      messageInput?.focus();
+      setTimeout(() => {
+        messageInput?.focus();
+      }, 50);
     } catch (error) {
       clearTimeout(timeout);
       isLoading = false;
@@ -103,9 +132,11 @@
           ? { ...msg, text: errorText, timestamp: new Date() }
           : msg
       );
-      
+
       // Focus input field after error message
-      messageInput?.focus();
+      setTimeout(() => {
+        messageInput?.focus();
+      }, 50);
     }
   }
 
@@ -117,7 +148,19 @@
   }
 
   onMount(() => {
-    messageInput?.focus();
+    // Subscribe to session ID store
+    const unsubscribe = sessionId.subscribe(value => {
+      currentSessionId = value;
+    });
+
+    // Focus with a slight delay to ensure DOM is ready
+    setTimeout(() => {
+      messageInput?.focus();
+      // Initialize textarea height
+      resizeTextarea();
+    }, 100);
+
+    return unsubscribe;
   });
 </script>
 
@@ -126,8 +169,8 @@
   <header class="chat-header">
     <div class="header-content">
       <div class="ai-indicator">
-        <Bot size={32} />
-        <span>AI Assistant</span>
+        <img src="/elf.png" alt="Elven Assistant" class="header-avatar" />
+        <span>Elven Assistant</span>
       </div>
       <div class="status">
         {#if isLoading}
@@ -149,13 +192,15 @@
           {#if message.isUser}
             <User size={24} />
           {:else}
-            <Bot size={24} />
+            <img src="/elf.png" alt="Elven Assistant" class="avatar-image" />
           {/if}
         </div>
         <div class="message-content">
           <div class="message-bubble">
             {#if message.text}
-              <p>{message.text}</p>
+              <div class="markdown-content">
+                {@html renderMarkdown(message.text)}
+              </div>
             {:else if !message.isUser}
               <div class="loading-dots">
                 <span></span>
@@ -163,7 +208,9 @@
                 <span></span>
               </div>
             {:else}
-              <p>{message.text}</p>
+              <div class="markdown-content">
+                {@html renderMarkdown(message.text)}
+              </div>
             {/if}
           </div>
           <div class="message-time">
@@ -208,11 +255,12 @@
     flex-direction: column;
     height: 100vh;
     background: white;
-    max-width: 100vw;
+    width: 80%;
+    max-width: 1400px;
     margin: 0 auto;
     border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.3);
   }
 
   /* Header */
@@ -220,7 +268,7 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 1.5rem 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
   .header-content {
@@ -239,17 +287,25 @@
     font-weight: 600;
   }
 
+  .header-avatar {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
   .status {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 1.5rem;
     opacity: 0.9;
   }
 
   .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 16px;
+    height: 16px;
     background: #10b981;
     border-radius: 50%;
     animation: pulse 2s infinite;
@@ -286,8 +342,8 @@
   }
 
   .avatar {
-    width: 3rem;
-    height: 3rem;
+    width: 6rem;
+    height: 6rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -297,13 +353,20 @@
   }
 
   .user-message .avatar {
-    background: #3b82f6;
+    background: #2563eb;
     color: white;
   }
 
   .ai-message .avatar {
     background: #8b5cf6;
     color: white;
+    overflow: hidden;
+  }
+
+  .avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .message-content {
@@ -315,14 +378,17 @@
   .message-bubble {
     padding: 1.25rem 1.75rem;
     border-radius: 1.5rem;
-    font-size: 1.1rem;
+    font-size: 3rem;
     line-height: 1.6;
     word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
     max-width: 100%;
   }
 
   .user-message .message-bubble {
-    background: #3b82f6;
+    background: #2563eb;
     color: white;
     border-bottom-right-radius: 0.5rem;
   }
@@ -332,11 +398,98 @@
     color: #1f2937;
     border: 1px solid #e5e7eb;
     border-bottom-left-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .message-bubble p {
     margin: 0;
+  }
+
+  .markdown-content {
+    width: 100%;
+  }
+
+  .markdown-content p {
+    margin: 0 0 1rem 0;
+  }
+
+  .markdown-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+  }
+
+  .markdown-content h1:first-child,
+  .markdown-content h2:first-child,
+  .markdown-content h3:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-content code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 0.3rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  .ai-message .markdown-content code {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .user-message .markdown-content code {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .markdown-content pre {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  .markdown-content pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+
+  .markdown-content li {
+    margin: 0.5rem 0;
+  }
+
+  .markdown-content blockquote {
+    border-left: 4px solid rgba(0, 0, 0, 0.2);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+  }
+
+  .markdown-content a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  .markdown-content strong {
+    font-weight: 700;
+  }
+
+  .markdown-content em {
+    font-style: italic;
   }
 
   .loading-dots {
@@ -372,7 +525,7 @@
   }
 
   .message-time {
-    font-size: 0.8rem;
+    font-size: 1.5rem;
     color: #6b7280;
     margin-top: 0.5rem;
     padding: 0 0.5rem;
@@ -385,7 +538,7 @@
   /* Input Container */
   .input-container {
     background: white;
-    border-top: 1px solid #e5e7eb;
+    border-top: 2px solid #e5e7eb;
     padding: 1.5rem 2rem 2rem;
   }
 
@@ -404,16 +557,19 @@
 
   .message-input {
     flex: 1;
-    border: 2px solid #e5e7eb;
+    border: 4px solid #e5e7eb;
     border-radius: 1.5rem;
     padding: 1.25rem 1.75rem;
-    font-size: 1.1rem;
+    font-size: 3rem;
     font-family: inherit;
     resize: none;
     outline: none;
     transition: border-color 0.2s;
     min-height: 3.5rem;
-    max-height: 8rem;
+    max-height: 30vh;
+    overflow-y: auto;
+    caret-color: #2563eb;
+    caret-width: 4px;
   }
 
   .message-input:focus {
