@@ -6,17 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'chat-ui/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'chat-ui/**'
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: chat-ui
+
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [24.x, 26.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -26,8 +35,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: |
-        cd chat-ui && \
-        npm ci && \
-        npm run build && \
-        npm run check
+        cache-dependency-path: 'chat-ui/package-lock.json'
+    - run: npm ci
+    - run: npm run build
+    - run: npm run check

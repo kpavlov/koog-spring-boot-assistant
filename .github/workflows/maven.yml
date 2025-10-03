@@ -11,8 +11,15 @@ name: Java CI with Maven
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'chat-ui/**'
+      - 'promptfoo/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'chat-ui/**'
+      - 'promptfoo/**'
+  workflow_dispatch:
 
 permissions:
   contents: read # access to check out code and install dependencies
