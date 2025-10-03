@@ -26,7 +26,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
             mockOpenai.embeddings {
                 stringInput(question)
             } respondsError {
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatusCode = 500
                 body = ""
                 delay = 42.milliseconds
             }
@@ -56,7 +56,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 inputContains(question)
             } respondsError {
                 body = ""
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatusCode = 500
             }
 
             val response = chatClient.sendMessage(question)
@@ -91,7 +91,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 userMessageContains(question)
             } respondsError {
                 body = ""
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatusCode = 500
             }
 
             val response = chatClient.sendMessage(question)

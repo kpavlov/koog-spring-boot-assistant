@@ -21,7 +21,8 @@
         </dependency>
         <dependency>
             <groupId>me.kpavlov.aimocks</groupId>
-            <artifactId>ai-mocks-openai-jvm</artifactId>
+            <artifactId>ai-mocks-openai-standalone</artifactId>
+            <version>${mokksy.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
