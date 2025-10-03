@@ -1,3 +1,4 @@
+debug: true
 ai:
     koog:
         rag:
@@ -9,5 +10,5 @@ ai:
 logging:
     level:
         "com.example.app": trace
-        "ai.koog.agents.core.agent.GraphAIAgent": off
-        "ai.koog.agents": warn
+#        "ai.koog.agents.core.agent.GraphAIAgent": off
+        "ai.koog.agents": debug
