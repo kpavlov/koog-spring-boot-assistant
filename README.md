@@ -132,10 +132,25 @@ The application consists of three main layers:
 
 #### AI Agent Workflow
 The agent implements a node-based execution graph:
-```
-User Input → Moderation → LLM Processing → Response
-                ↓ (harmful)
-             Error Response
+
+```mermaid
+graph LR
+      Start([Start]) --> Moderate[Moderate Input<br/>OpenAI Moderation]
+      Moderate -->|isHarmful = false| LLM[LLM Request<br/>GPT-4 Mini]
+      Moderate -->|isHarmful = true| ErrorFinish([Finish<br/>Moderation Error])
+      LLM -->|Assistant Message| Finish([Finish<br/>Return Response])
+      LLM -.->|Exception| SystemError([Finish<br/>System Error])
+      Moderate -.->|Exception| SystemError
+
+      style Start fill:#90EE90
+      style Finish fill:#90EE90
+      style ErrorFinish fill:#FFB6C6
+      style SystemError fill:#FFB6C6
+      style Moderate fill:#87CEEB
+      style LLM fill:#DDA0DD
+
+
+
 ```
 
 #### RAG System
