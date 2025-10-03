@@ -4,10 +4,12 @@ ai:
       tracing: false
     chat-memory:
       session-store:
-        path: "./var/tmp/session-store"
+        path: "./target/tmp/session-store"
+    prompt-template:
+      path: "./data/prompt-templates"
     rag:
       embedding-store:
-        path: "./var/tmp/embedding-store"
+        path: "./target/tmp/embedding-store"
       knowledge-base:
         path: "./data/knowledge"
 

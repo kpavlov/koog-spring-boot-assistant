@@ -42,7 +42,7 @@
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-         <mokksy.version>0.5.0-RC1</mokksy.version>
+         <mokksy.version>0.5.0-RC2</mokksy.version>
 <!--        <mokksy.version>0.5.0-SNAPSHOT</mokksy.version>-->
         <spring-boot.version>3.5.6</spring-boot.version>
     </properties>
@@ -93,11 +93,13 @@
                 <groupId>me.kpavlov.aimocks</groupId>
                 <artifactId>ai-mocks-openai-jvm</artifactId>
                 <version>${mokksy.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>me.kpavlov.aimocks</groupId>
                 <artifactId>ai-mocks-ollama-jvm</artifactId>
                 <version>${mokksy.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.kotest</groupId>

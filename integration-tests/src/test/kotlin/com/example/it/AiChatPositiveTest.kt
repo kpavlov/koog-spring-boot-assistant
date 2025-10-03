@@ -14,7 +14,7 @@ class AiChatPositiveTest : AbstractIntegrationTest() {
         runTest {
             val seed = nextInt()
             val question = "To be or not to be, $seed?"
-            val expectedAnswer = """It's a good question: "$question""""
+            val expectedAnswer = "It's a good question: $question"
 
             mockOpenai.embeddings {
                 stringInput(question)
@@ -29,7 +29,7 @@ class AiChatPositiveTest : AbstractIntegrationTest() {
             }
 
             mockOpenai.completion {
-                systemMessageContains("Elven assistant")
+                systemMessageContains("witty and wise Elven assistant guiding adventurers")
                 userMessageContains(question)
             } responds {
                 assistantContent = expectedAnswer

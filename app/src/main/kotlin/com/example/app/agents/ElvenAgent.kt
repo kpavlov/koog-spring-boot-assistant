@@ -27,17 +27,16 @@ import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
 import com.example.app.SessionId
+import com.example.app.koog.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
 import org.springframework.stereotype.Service
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
-import kotlin.properties.Delegates
 
 @Service
 class ElvenAgent(
@@ -46,12 +45,10 @@ class ElvenAgent(
     private val buildProps: BuildProperties,
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
     private val persistenceStorageProvider: PersistenceStorageProvider,
+    private val promptTemplateProvider: PromptTemplateProvider,
 ) {
     private val log = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
-
-    private val systemPrompt =
-        javaClass.getResource("/agents/elven-assistant/system-prompt.md")!!.readText()
 
     private val systemErrorResponse =
         javaClass.getResource("/agents/elven-assistant/system-error.md")!!.readText()
@@ -70,11 +67,12 @@ class ElvenAgent(
     private val strategy =
         strategy(
             name = "test-strategy",
-            toolSelectionStrategy = ToolSelectionStrategy.NONE, // TODO: fix mokksy
+            toolSelectionStrategy = ToolSelectionStrategy.NONE, // TODO: support tools
         ) {
-            val callLLM by nodeLLMRequest("test-llm-call")
+            val callLLM by nodeLLMRequest("llm-call")
 
             val moderateInput by nodeLLMModerateMessage(
+                name = "moderate-input",
                 moderatingModel = OpenAIModels.Moderation.Omni,
             )
 
@@ -109,6 +107,13 @@ class ElvenAgent(
                     .mostRelevantDocuments(input, count = 3)
                     .toList()
 
+            val systemPrompt =
+                promptTemplateProvider.getPromptTemplate(
+                    group = "elven-assistant",
+                    id = "system",
+                    version = "latest",
+                )
+
             val agent =
                 AIAgent(
                     id = sessionId,
@@ -116,7 +121,7 @@ class ElvenAgent(
                     agentConfig =
                         AIAgentConfig(
                             prompt =
-                                prompt("context") {
+                                prompt("with-context") {
                                     system(systemPrompt)
                                     if (relevantDocuments.isNotEmpty()) {
                                         user {

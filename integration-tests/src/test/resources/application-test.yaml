@@ -3,7 +3,11 @@ ai:
         rag:
             knowledge-base:
                 path: "./../app/data/knowledge"
+        prompt-template:
+            path: "./../app/data/prompt-templates"
 
 logging:
     level:
         "com.example.app": trace
+        "ai.koog.agents.core.agent.GraphAIAgent": off
+        "ai.koog.agents": warn

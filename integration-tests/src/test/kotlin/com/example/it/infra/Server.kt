@@ -14,7 +14,6 @@ object Server {
 
     init {
         System.setProperty("ai.koog.openai.base-url", TestEnvironment.mockOpenai.baseUrl())
-        System.setProperty("ai.koog.openai.base-url", TestEnvironment.mockOpenai.baseUrl())
 
         applicationContext =
             SpringApplication

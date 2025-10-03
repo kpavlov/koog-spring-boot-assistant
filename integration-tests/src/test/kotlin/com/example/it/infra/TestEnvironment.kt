@@ -16,5 +16,23 @@ object TestEnvironment {
 
         System.setProperty("OPENAI_API_KEY", "dummyOpenAIKey")
         System.setProperty("spring.profiles.active", "test")
+
+        prepareForRagIngestion()
+    }
+
+    private fun prepareForRagIngestion() {
+        listOf(
+            "Care for Magical Trees",
+            "Valley of Light",
+            "Magical Bow",
+            "Morning Pine Elixir",
+            "Teleportation and Portals",
+        ).forEach {
+            mockOpenai.embeddings {
+                inputContains(it)
+            } responds {
+                this.delay = 1.milliseconds
+            }
+        }
     }
 }

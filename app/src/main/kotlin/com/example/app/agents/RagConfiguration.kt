@@ -45,6 +45,15 @@ class RagConfiguration {
                 JVMTextDocumentEmbedder(documentEmbedder),
                 embeddingStorePath,
             )
+
+        initDocumentStorage(embeddingStorePath = embeddingStorePath, storage = storage)
+        return storage
+    }
+
+    private fun initDocumentStorage(
+        embeddingStorePath: Path,
+        storage: JVMFileDocumentEmbeddingStorage,
+    ) {
         if (!embeddingStorePath.exists()) {
             embeddingStorePath.createDirectories()
             logger.info("Initializing JVMFileDocumentEmbeddingStorage: ${embeddingStorePath.toAbsolutePath()}")
@@ -59,7 +68,5 @@ class RagConfiguration {
                     }
             }
         }
-
-        return storage
     }
 }
