@@ -157,7 +157,18 @@
             const hasHistory = messages.length > 0;
             await wsClient.connect(hasHistory);
             console.log('WebSocket connected');
-            
+
+            // Update UI state on successful connection
+            isServerOnline = true;
+
+            // Refresh server version
+            try {
+                serverVersion = await getApiVersion();
+            } catch (error) {
+                console.warn('Failed to get server version after connect:', error);
+                // Keep isServerOnline true since WebSocket is connected
+            }
+
             // Reset reconnect attempts on successful connection
             reconnectAttempts = 0;
         } catch (error) {
