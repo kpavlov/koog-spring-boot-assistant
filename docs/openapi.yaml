@@ -66,7 +66,7 @@ paths:
             tags:
                 - chat
             parameters:
-                - $ref: '#/components/parameters/SessionIdHeader'
+                -   $ref: '#/components/parameters/SessionIdParam'
             requestBody:
                 required: true
                 content:
@@ -85,23 +85,23 @@ paths:
                                 $ref: '#/components/schemas/Answer'
 components:
     parameters:
-        SessionIdHeader:
+        SessionIdParam:
             name: X-Session-Id
             in: header
-            description: Optional session identifier (UUID v4) for maintaining conversation context. If not provided, a new session will be created.
+            description: Optional session identifier for maintaining conversation context. If not provided, a new session will be created.
             required: false
             schema:
                 $ref: '#/components/schemas/ChatSessionId'
     headers:
         SessionIdHeader:
-            description: Session identifier (UUID v4) for the conversation
+            description: Session identifier for the conversation
             schema:
                 $ref: '#/components/schemas/ChatSessionId'
     schemas:
         ChatSessionId:
-            description: Session identifier (UUID v4) for the conversation
+            description: Session identifier  for the conversation
             type: string
-            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            pattern: '^[0-9a-f-]{12,64}$'
             example: "550e8400-e29b-41d4-a716-446655440000"
         ChatRequest:
             type: object

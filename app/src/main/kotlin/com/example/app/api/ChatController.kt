@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 
@@ -22,9 +23,7 @@ class ChatController(
     override suspend fun getVersion(): ResponseEntity<String> = ResponseEntity.ok("1.0")
 
     override suspend fun chat(
-        @Valid @RequestBody chatRequest: ChatRequest,
-        @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-        @RequestHeader(value = "X-Session-Id", required = false)
+        chatRequest: ChatRequest,
         xSessionId: String?,
     ): ResponseEntity<Answer> {
         logger.info("Received chat request: {}", chatRequest)
