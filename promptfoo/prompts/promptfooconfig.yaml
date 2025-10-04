@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Automatic response evaluation using LLM rubric scoring
+
+prompts:
+  - file://prompts.txt
+providers:
+#  - echo
+  - openai:chat:gpt-4o
+#  - openai:gpt-5-mini
+  - openai:gpt-5-nano
+#  - openai:gpt-5
+defaultTest:
+  assert:
+    - type: llm-rubric
+      value: Do not mention that you are an AI or chat assistant
+    - type: javascript
+      # Shorter is better
+      value: Math.max(0, Math.min(1, 1 - (output.length - 100) / 900));

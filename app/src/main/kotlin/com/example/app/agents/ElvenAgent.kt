@@ -137,7 +137,7 @@ class ElvenAgent(
                         AIAgentConfig(
                             prompt =
                                 createPrompt(systemPrompt, input, relevantDocuments),
-                            model = OpenAIModels.Chat.GPT5Nano,
+                            model = OpenAIModels.CostOptimized.GPT4_1Mini,
                             maxAgentIterations = 100,
                         ),
                     strategy = strategy,

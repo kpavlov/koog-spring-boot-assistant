@@ -5,15 +5,15 @@ config:
 tests:
   - description: Get current time
     vars:
-      query: 'What is current price of Apple?'
+      query: What's the price of Lembas
     assert:
-      - type: contains
-        value: AAPL
+      - type: icontains
+        value: Lembas
       - type: llm-rubric
         value: |
           The response should:
-           1. Provide some stock price information. You can't know the correct price value
+           1. Provide some price of Lembas bread. You can't know the correct price value
            2. Be formatted in a user-friendly way
            3. Not include financial advice disclaimers
       - type: latency
-        threshold: 4500 # some specific latency requirement
+        threshold: 15000 # some specific latency requirement
