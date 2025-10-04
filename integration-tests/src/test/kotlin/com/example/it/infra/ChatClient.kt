@@ -1,5 +1,6 @@
 package com.example.it
 
+import com.example.it.client.model.Answer
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.HttpClient
@@ -68,11 +69,5 @@ class ChatClient(
     data class ChatRequest(
         val message: String,
         val chatSessionId: String? = null,
-    )
-
-    @Serializable
-    data class Answer(
-        val message: String,
-        val chatSessionId: String,
     )
 }

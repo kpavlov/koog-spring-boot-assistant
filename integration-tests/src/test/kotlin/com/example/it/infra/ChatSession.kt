@@ -1,6 +1,6 @@
 package com.example.it.infra
 
-import kotlinx.serialization.Serializable
+import com.example.it.client.model.Answer
 
 /**
  * Abstraction for chat session that can send messages and receive responses.
@@ -18,10 +18,4 @@ interface ChatSession {
      * Close the chat session and release resources.
      */
     suspend fun close()
-
-    @Serializable
-    data class Answer(
-        val message: String,
-        val chatSessionId: String,
-    )
 }

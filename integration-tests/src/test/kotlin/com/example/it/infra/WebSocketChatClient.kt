@@ -1,5 +1,6 @@
 package com.example.it.infra
 
+import com.example.it.client.model.Answer
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.awaitility.kotlin.await
@@ -87,7 +88,7 @@ class WebSocketChatClient(
         isConnected = true
     }
 
-    override suspend fun sendMessage(message: String): ChatSession.Answer {
+    override suspend fun sendMessage(message: String): Answer {
         connect()
 
         val request =
@@ -101,7 +102,7 @@ class WebSocketChatClient(
 
         // Wait for response
         val responseJson = incomingChannel.receive()
-        val response = json.decodeFromString<ChatSession.Answer>(responseJson)
+        val response = json.decodeFromString<Answer>(responseJson)
 
         return response
     }
