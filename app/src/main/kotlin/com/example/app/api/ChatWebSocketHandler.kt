@@ -41,11 +41,25 @@ class ChatWebSocketHandler(
                         try {
                             val chatRequest = objectMapper.readValue(message, ChatRequest::class.java)
 
-                            logger.info("Received message: ${chatRequest.message}, sessionId=$sessionId")
+                            val chatSessionId = chatRequest.chatSessionId ?: sessionId
 
-                            val reply = agent.giveAdvice(chatSessionId = sessionId, input = chatRequest.message)
+                            logger.info(
+                                "Received message: ${chatRequest.message}, sessionId=$chatSessionId",
+                            )
 
-                            val answer = Answer(message = reply, chatSessionId = sessionId)
+                            if (sessionId != chatSessionId) {
+                                session.attributes["chatSessionId"] = chatSessionId
+                                sessions.remove(sessionId)
+                                sessions[chatSessionId] = session
+                            }
+
+                            val reply =
+                                agent.giveAdvice(
+                                    chatSessionId = chatSessionId,
+                                    input = chatRequest.message,
+                                )
+
+                            val answer = Answer(message = reply, chatSessionId = chatSessionId)
 
                             objectMapper.writeValueAsString(answer)
                         } catch (e: Exception) {
@@ -63,8 +77,12 @@ class ChatWebSocketHandler(
         return session
             .send(output)
             .doFinally {
+                val chatSessionId = session.attributes["chatSessionId"]
+                chatSessionId?.let {
+                    sessions.remove(it)
+                }
                 sessions.remove(sessionId)
-                logger.info("WebSocket disconnected: sessionId=$sessionId")
+                logger.info("WebSocket disconnected: sessionId=$sessionId, chatSessionId=$chatSessionId")
             }
     }
 }

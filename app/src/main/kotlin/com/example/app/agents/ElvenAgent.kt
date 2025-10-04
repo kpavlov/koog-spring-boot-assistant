@@ -98,8 +98,15 @@ class ElvenAgent(
     suspend fun giveAdvice(
         input: String,
         chatSessionId: ChatSessionId,
-    ): String =
-        try {
+    ): String {
+        if (input == "[START]" || input == "[GREETING]") {
+            return """Ah, a bright hello to you, traveler! How may I illuminate your path through elven wonders today?
+                """.trimMargin()
+        } else if (input == "[CONTINUE]") {
+            return "" // do nothing
+        }
+
+        return try {
             val relevantDocuments =
                 rankedDocumentStorage
                     .mostRelevantDocuments(input, count = 3)
@@ -159,6 +166,7 @@ class ElvenAgent(
             log.error("Error processing request", e)
             systemErrorResponse
         }
+    }
 
     private fun createPrompt(
         systemPrompt: String,

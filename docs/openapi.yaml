@@ -112,6 +112,8 @@ components:
                     type: string
                     description: The message to send to the AI agent
                     example: "How do I implement a REST API in Spring Boot?"
+                chatSessionId:
+                    $ref: '#/components/schemas/ChatSessionId'
         Answer:
             type: object
             required:

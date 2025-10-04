@@ -1,7 +1,7 @@
 <script lang="ts">
-    import {afterUpdate, onMount} from 'svelte';
+    import {afterUpdate, onDestroy, onMount} from 'svelte';
     import {Loader2, Send, User} from 'lucide-svelte';
-    import {ApiError, getApiVersion, sendChatMessage} from './lib/api';
+    import {ApiError, getApiVersion, WebSocketChatClient} from './lib/api';
     import {sessionId} from './lib/session';
     import {marked} from 'marked';
 
@@ -12,16 +12,8 @@
         timestamp: Date;
     }
 
-    let messages: Message[] = [
-        {
-            id: '1',
-            text: 'Hello! I\'m your Elven Assistant. How can I help you today?',
-            isUser: false,
-            timestamp: new Date()
-        }
-    ];
+    let messages: Message[] = [];
 
-    const HEALTH_CHECK_INTERVAL_MS = 7000; // 7 seconds
 
     let currentMessage = '';
     let isLoading = false;
@@ -30,7 +22,11 @@
     let currentSessionId: string;
     let isServerOnline = true;
     let serverVersion = '';
-    let healthCheckInterval: number;
+    let wsClient: WebSocketChatClient | null = null;
+    let reconnectTimeout: number | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 10;
+    const INITIAL_RECONNECT_DELAY = 1000; // 1 second
 
     // Configure marked options
     marked.setOptions({
@@ -43,16 +39,129 @@
         return marked.parse(text) as string;
     }
 
-    // Check server health
+    // Check server health and reconnect WebSocket if needed
     async function checkServerHealth() {
-        try {
-            const version = await getApiVersion();
-            isServerOnline = true;
-            serverVersion = version;
-        } catch (error) {
+        const wasOffline = !isServerOnline;
+
+        // Check if WebSocket is connected
+        if (wsClient && wsClient.isConnected()) {
+            // Connection is live, get version and update status
+            try {
+                const version = await getApiVersion();
+                isServerOnline = true;
+                serverVersion = version;
+            } catch (error) {
+                // WebSocket is connected but version call failed
+                // Still consider online since WebSocket works
+                isServerOnline = true;
+                console.warn('Version endpoint failed but WebSocket is connected:', error);
+            }
+        } else {
+            // WebSocket is not connected, try to reconnect
             isServerOnline = false;
             serverVersion = '';
-            console.error('Server health check failed:', error);
+
+            try {
+                await connectWebSocket();
+                // After successful connection, get version
+                if (wsClient && wsClient.isConnected()) {
+                    try {
+                        const version = await getApiVersion();
+                        isServerOnline = true;
+                        serverVersion = version;
+                    } catch (error) {
+                        // WebSocket connected but version failed
+                        isServerOnline = true;
+                        console.warn('Version endpoint failed but WebSocket is connected:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('WebSocket connection failed:', error);
+                // Trigger reconnection if connection fails
+                scheduleReconnect();
+            }
+        }
+    }
+
+    // Automatic reconnection with exponential backoff
+    function scheduleReconnect() {
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+        }
+
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            console.log('Max reconnection attempts reached');
+            isServerOnline = false;
+            serverVersion = '';
+            return;
+        }
+
+        const delay = 5000; // Fixed 5-second interval for reconnection attempts
+        console.log(`Scheduling reconnection attempt ${reconnectAttempts + 1} in ${delay}ms`);
+
+        reconnectTimeout = setTimeout(async () => {
+            reconnectAttempts++;
+            try {
+                await connectWebSocket();
+                if (wsClient && wsClient.isConnected()) {
+                    // Reset reconnect attempts on successful connection
+                    reconnectAttempts = 0;
+                    console.log('Reconnection successful');
+                }
+            } catch (error) {
+                console.error('Reconnection failed:', error);
+                scheduleReconnect(); // Schedule next attempt
+            }
+        }, delay);
+    }
+
+    // Handle WebSocket disconnection
+    function handleDisconnect() {
+        console.log('WebSocket disconnected, updating status and scheduling reconnection');
+        isServerOnline = false;
+        serverVersion = '';
+        scheduleReconnect();
+    }
+
+    // Connect to WebSocket
+    async function connectWebSocket() {
+        // Check if already connected to prevent duplicate connections
+        if (wsClient && wsClient.isConnected()) {
+            console.log('WebSocket already connected, skipping connection attempt');
+            return;
+        }
+
+        try {
+            if (wsClient) {
+                wsClient.close();
+            }
+            wsClient = new WebSocketChatClient(currentSessionId);
+
+            // Add handler for greeting and other messages that are not handled by sendMessage
+            wsClient.addMessageHandler((answer) => {
+                // Only add messages when not loading (to avoid duplicating sendMessage responses)
+                // Also ignore messages with empty content
+                if (!isLoading && answer.message && answer.message.trim() !== '') {
+                    const newMessage: Message = {
+                        id: Date.now().toString(),
+                        text: answer.message,
+                        isUser: false,
+                        timestamp: new Date()
+                    };
+                    messages = [...messages, newMessage];
+                }
+            });
+
+            // Add disconnect handler for automatic reconnection
+            wsClient.addDisconnectHandler(handleDisconnect);
+
+            // Check if we have message history to determine connection type
+            const hasHistory = messages.length > 0;
+            await wsClient.connect(hasHistory);
+            console.log('WebSocket connected');
+        } catch (error) {
+            console.error('Failed to connect WebSocket:', error);
+            wsClient = null;
         }
     }
 
@@ -79,9 +188,18 @@
         scrollToBottom();
     });
 
-    // Send message to AI backend
+    // Send message to AI backend via WebSocket
     async function sendMessage() {
         if (!currentMessage.trim() || isLoading || !isServerOnline) return;
+
+        // Ensure WebSocket is connected
+        if (!wsClient || !wsClient.isConnected()) {
+            await connectWebSocket();
+            if (!wsClient || !wsClient.isConnected()) {
+                console.error('WebSocket not connected');
+                return;
+            }
+        }
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -104,23 +222,15 @@
         currentMessage = '';
         isLoading = true;
 
-        // Block UI for 5 seconds or until response
+        // Block UI for 30 seconds or until response
         const timeout = setTimeout(() => {
             isLoading = false;
-        }, 5000);
+        }, 30000);
 
         try {
-            const response = await sendChatMessage({
-                message: messageText,
-                sessionId: currentSessionId
-            });
+            const response = await wsClient.sendMessage(messageText);
 
             clearTimeout(timeout);
-
-            // Update sessionId from response if server provides a new one
-            if (response.sessionId && response.sessionId !== currentSessionId) {
-                sessionId.update(response.sessionId);
-            }
 
             // Update the loading message with the actual response
             messages = messages.map(msg =>
@@ -165,7 +275,7 @@
         }
     }
 
-    onMount(() => {
+    onMount(async () => {
         // Subscribe to session ID store
         const unsubscribe = sessionId.subscribe(value => {
             currentSessionId = value;
@@ -179,15 +289,29 @@
         }, 100);
 
         // Initial health check
-        checkServerHealth();
+        await checkServerHealth();
 
-        // Set up periodic health check
-        healthCheckInterval = setInterval(checkServerHealth, HEALTH_CHECK_INTERVAL_MS);
+        // Connect WebSocket
+        await connectWebSocket();
 
         return () => {
             unsubscribe();
-            clearInterval(healthCheckInterval);
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+            }
+            if (wsClient) {
+                wsClient.close();
+            }
         };
+    });
+
+    onDestroy(() => {
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+        }
+        if (wsClient) {
+            wsClient.close();
+        }
     });
 </script>
 
@@ -196,7 +320,7 @@
     <header class="chat-header">
         <div class="header-content">
             <div class="ai-indicator">
-                <img src="/elf.png" alt="Elven Assistant" class="header-avatar"/>
+                <img src="/logo.png" alt="Elven Assistant" class="header-avatar"/>
                 <span>Elven Assistant</span>
             </div>
             <div class="status">
@@ -315,8 +439,12 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        font-size: 1.25rem;
+        font-size: 3rem;
         font-weight: 600;
+        font-family: fantasy, 'Times New Roman', serif;
+        letter-spacing: 0.05em;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6);
+        animation: gentle-glow 3s ease-in-out infinite alternate;
     }
 
     .header-avatar {
@@ -324,7 +452,7 @@
         height: 5rem;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid rgba(255, 255, 255, 0.3);
+        border: 6px solid rgba(255, 255, 255, 0.5);
     }
 
     .status {
@@ -436,6 +564,7 @@
         background: #2563eb;
         color: white;
         border-bottom-right-radius: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .ai-message .message-bubble {
@@ -570,6 +699,7 @@
     }
 
     .message-time {
+        display: none; /* hide it temporary */
         font-size: 1.5rem;
         color: #6b7280;
         margin-top: 0.5rem;
@@ -675,6 +805,15 @@
         }
     }
 
+    @keyframes gentle-glow {
+        0% {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6);
+        }
+        100% {
+            text-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 60px rgba(255, 255, 255, 0.8);
+        }
+    }
+
     /* Dark mode */
     @media (prefers-color-scheme: dark) {
         .chat-app {
@@ -718,7 +857,7 @@
         }
 
         .ai-indicator {
-            font-size: 1.5rem;
+            font-size: 2.25rem;
         }
 
         .chat-container {

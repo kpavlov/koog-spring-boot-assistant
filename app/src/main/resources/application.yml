@@ -15,9 +15,10 @@ ai:
 
 logging:
   level:
-    "ai.koog": info
+    "ai.koog": warn
     "io.micrometer.registry.otlp": error
     "org.springframework.web": info
+    root: warn
 
 server:
   shutdown: immediate
