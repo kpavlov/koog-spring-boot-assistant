@@ -1,6 +1,6 @@
 providers:
-  - file://http-provider.yaml
-#  - file://ws-provider.yaml
+#  - file://http-provider.yaml
+  - file://ws-provider.yaml
 
 # Verify condition for all tests
 defaultTest:

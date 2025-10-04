@@ -1,6 +1,8 @@
 package com.example.it
 
+import com.example.it.client.model.Answer
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -14,10 +16,13 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
 
 class ChatClient(
     val port: Int,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     private val client =
         HttpClient {
             followRedirects = true
@@ -34,7 +39,10 @@ class ChatClient(
         return response.bodyAsText()
     }
 
-    suspend fun sendMessage(message: String): Answer {
+    suspend fun sendMessage(
+        message: String,
+        expectedStatusCode: HttpStatusCode = HttpStatusCode.OK,
+    ): Answer {
         val response =
             client.post("http://localhost:$port/api/chat") {
                 contentType(ContentType.Application.Json)
@@ -45,21 +53,21 @@ class ChatClient(
                 )
             }
 
-//        response shouldHaveStatus HttpStatusCode.OK
-        response.status shouldBe HttpStatusCode.OK
+        if (response.status != expectedStatusCode) {
+            logger.error(
+                "Received unexpected response: Headers: {}\nBody:\n{}",
+                response.headers,
+                response.bodyAsText(),
+            )
+        }
+        response.status shouldBe expectedStatusCode
 
-        return response.body()
+        return response.body<Answer>()
     }
 
     @Serializable
     data class ChatRequest(
         val message: String,
-        val sessionId: String? = null,
-    )
-
-    @Serializable
-    data class Answer(
-        val message: String,
-        val sessionId: String,
+        val chatSessionId: String? = null,
     )
 }

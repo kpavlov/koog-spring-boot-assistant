@@ -209,6 +209,11 @@
                     <artifactId>openapi-generator-maven-plugin</artifactId>
                     <version>7.16.0</version>
                 </plugin>
+                <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>

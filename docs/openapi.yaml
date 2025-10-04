@@ -1,7 +1,43 @@
 openapi: 3.0.3
 info:
     title: Chat API
-    description: REST API for chat interactions with an AI agent
+    description: |
+        REST API for chat interactions with an AI agent.
+
+        ## WebSocket Endpoint
+
+        In addition to the REST API, a WebSocket endpoint is available for real-time bidirectional communication:
+
+        **Endpoint:** `ws://localhost:8080/ws/chat`
+
+        **Headers:**
+        - `X-Session-Id` (optional): Session identifier for maintaining conversation context. If not provided, a new session will be created.
+
+        **Message Format:**
+        - **Send (Client → Server):** JSON matching the `ChatRequest` schema (without sessionId field)
+        - **Receive (Server → Client):** JSON matching the `Answer` schema (without sessionId field)
+
+        **Example:**
+        ```javascript
+        const ws = new WebSocket('ws://localhost:8080/ws/chat', {
+          headers: {
+            'X-Session-Id': '550e8400-e29b-41d4-a716-446655440000'  // Optional
+          }
+        });
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({
+            message: "Hello!"
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          const answer = JSON.parse(event.data);
+          console.log(answer.message);
+        };
+        ```
+
+        **Note:** Session ID is managed via the `X-Session-Id` header during the WebSocket handshake, not in the message payload.
     version: 1.0.0
 servers:
     -   url: http://localhost:8080
@@ -29,6 +65,8 @@ paths:
             operationId: chat
             tags:
                 - chat
+            parameters:
+                -   $ref: '#/components/parameters/SessionIdParam'
             requestBody:
                 required: true
                 content:
@@ -38,12 +76,33 @@ paths:
             responses:
                 '200':
                     description: Chat response
+                    headers:
+                        X-Session-Id:
+                            $ref: '#/components/headers/SessionIdHeader'
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Answer'
 components:
+    parameters:
+        SessionIdParam:
+            name: X-Session-Id
+            in: header
+            description: Optional session identifier for maintaining conversation context. If not provided, a new session will be created.
+            required: false
+            schema:
+                $ref: '#/components/schemas/ChatSessionId'
+    headers:
+        SessionIdHeader:
+            description: Session identifier for the conversation
+            schema:
+                $ref: '#/components/schemas/ChatSessionId'
     schemas:
+        ChatSessionId:
+            description: Session identifier  for the conversation
+            type: string
+            pattern: '^[0-9a-f-]{12,64}$'
+            example: "550e8400-e29b-41d4-a716-446655440000"
         ChatRequest:
             type: object
             required:
@@ -53,22 +112,17 @@ components:
                     type: string
                     description: The message to send to the AI agent
                     example: "How do I implement a REST API in Spring Boot?"
-                sessionId:
-                    type: string
-                    description: Optional session identifier for maintaining conversation context
-                    nullable: true
-                    example: "abc123"
+                chatSessionId:
+                    $ref: '#/components/schemas/ChatSessionId'
         Answer:
             type: object
             required:
                 - message
-                - sessionId
+                - chatSessionId
             properties:
                 message:
                     type: string
                     description: The AI agent's response
                     example: "To implement a REST API in Spring Boot, you can use @RestController..."
-                sessionId:
-                    type: string
-                    description: Session identifier for the conversation
-                    example: "abc123"
+                chatSessionId:
+                    $ref: '#/components/schemas/ChatSessionId'

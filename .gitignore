@@ -31,3 +31,6 @@ out/
 
 /app/config/application.properties
 var/
+
+### Junie ###
+test_*.html

@@ -1,16 +1,33 @@
 package com.example.it
 
+import com.example.it.infra.WebSocketChatClient
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 
-class AiChatPositiveTest : AbstractIntegrationTest() {
+class AiChatWebSocketTest : AbstractIntegrationTest() {
+    private val wsClient: WebSocketChatClient = WebSocketChatClient(port = server.port)
+
+    @BeforeEach
+    fun openWebSocket() =
+        runBlocking {
+            wsClient.connect()
+        }
+
+    @AfterEach
+    fun closeWebSocket() =
+        runBlocking {
+            wsClient.close()
+        }
+
     @Test
-    fun `Should answer a Question`(): Unit =
+    fun `Should answer a Question via WebSocket`(): Unit =
         runTest {
             val seed = nextInt()
             val question = "To be or not to be, $seed?"
@@ -35,11 +52,10 @@ class AiChatPositiveTest : AbstractIntegrationTest() {
                 assistantContent = expectedAnswer
             }
 
-            val response = chatClient.sendMessage(question)
+            val response = wsClient.sendMessage(question)
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
-                chatSessionId shouldNotBe null
             }
         }
 }

@@ -31,11 +31,11 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 delay = 42.milliseconds
             }
 
-            val response = chatClient.sendMessage(question)
+            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
-                sessionId shouldNotBe null
+                chatSessionId shouldNotBe null
             }
         }
 
@@ -59,11 +59,11 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 httpStatus = HttpStatusCode.ServiceUnavailable
             }
 
-            val response = chatClient.sendMessage(question)
+            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
-                sessionId shouldNotBe null
+                chatSessionId shouldNotBe null
             }
         }
 
@@ -94,11 +94,11 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 httpStatus = HttpStatusCode.InternalServerError
             }
 
-            val response = chatClient.sendMessage(question)
+            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
-                sessionId shouldNotBe null
+                chatSessionId shouldNotBe null
             }
         }
 }

@@ -5,9 +5,12 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.RollbackStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMModerateMessage
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
+import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
+import ai.koog.agents.core.dsl.extension.onToolCall
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.features.opentelemetry.feature.OpenTelemetry
@@ -26,7 +29,7 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
-import com.example.app.SessionId
+import com.example.app.ChatSessionId
 import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
@@ -72,7 +75,10 @@ class ElvenAgent(
                 name = "moderate-input",
                 moderatingModel = OpenAIModels.Moderation.Omni,
             )
-            val callLLM by nodeLLMRequest("llm-call")
+            val nodeCallLLM by nodeLLMRequest("CallLLM")
+
+            val nodeExecuteTool by nodeExecuteTool("ExecuteTool")
+            val nodeSendToolResult by nodeLLMSendToolResult("SendToolResult")
 
             edge(
                 nodeStart forwardTo moderateInput transformed {
@@ -81,7 +87,7 @@ class ElvenAgent(
             )
 
             edge(
-                moderateInput forwardTo callLLM
+                moderateInput forwardTo nodeCallLLM
                     onCondition { !it.moderationResult.isHarmful }
                     transformed { it.message.content },
             )
@@ -92,14 +98,25 @@ class ElvenAgent(
                     transformed { moderationErrorResponse },
             )
 
-            edge(callLLM forwardTo nodeFinish onAssistantMessage { true })
+            edge(nodeCallLLM forwardTo nodeFinish onAssistantMessage { true })
+            edge(nodeCallLLM forwardTo nodeExecuteTool onToolCall { true })
+            edge(nodeExecuteTool forwardTo nodeSendToolResult)
+            edge(nodeSendToolResult forwardTo nodeFinish onAssistantMessage { true })
+            edge(nodeSendToolResult forwardTo nodeExecuteTool onToolCall { true })
         }
 
     suspend fun giveAdvice(
         input: String,
-        sessionId: SessionId,
-    ): String =
-        try {
+        chatSessionId: ChatSessionId,
+    ): String {
+        if (input == "[START]" || input == "[GREETING]") {
+            return """Ah, a bright hello to you, traveler! How may I illuminate your path through elven wonders today?
+                """.trimMargin()
+        } else if (input == "[CONTINUE]") {
+            return "" // do nothing
+        }
+
+        return try {
             val relevantDocuments =
                 rankedDocumentStorage
                     .mostRelevantDocuments(input, count = 3)
@@ -114,13 +131,13 @@ class ElvenAgent(
 
             val agent =
                 AIAgent(
-                    id = sessionId,
+                    id = chatSessionId,
                     promptExecutor = promptExecutor,
                     agentConfig =
                         AIAgentConfig(
                             prompt =
                                 createPrompt(systemPrompt, input, relevantDocuments),
-                            model = OpenAIModels.CostOptimized.GPT4_1Mini,
+                            model = OpenAIModels.Chat.GPT5Nano,
                             maxAgentIterations = 100,
                         ),
                     strategy = strategy,
@@ -159,6 +176,7 @@ class ElvenAgent(
             log.error("Error processing request", e)
             systemErrorResponse
         }
+    }
 
     private fun createPrompt(
         systemPrompt: String,
