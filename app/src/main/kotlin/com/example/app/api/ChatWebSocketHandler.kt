@@ -44,7 +44,7 @@ class ChatWebSocketHandler(
                             val chatSessionId = chatRequest.chatSessionId ?: sessionId
 
                             logger.info(
-                                "Received message: ${chatRequest.message}, sessionId=$chatSessionId",
+                                "Received message: ${chatRequest.message}, chatSessionId=$chatSessionId",
                             )
 
                             if (sessionId != chatSessionId) {

@@ -104,8 +104,6 @@
             try {
                 await connectWebSocket();
                 if (wsClient && wsClient.isConnected()) {
-                    // Reset reconnect attempts on successful connection
-                    reconnectAttempts = 0;
                     console.log('Reconnection successful');
                 }
             } catch (error) {
@@ -159,6 +157,9 @@
             const hasHistory = messages.length > 0;
             await wsClient.connect(hasHistory);
             console.log('WebSocket connected');
+            
+            // Reset reconnect attempts on successful connection
+            reconnectAttempts = 0;
         } catch (error) {
             console.error('Failed to connect WebSocket:', error);
             wsClient = null;
@@ -275,7 +276,7 @@
         }
     }
 
-    onMount(async () => {
+    onMount(() => {
         // Subscribe to session ID store
         const unsubscribe = sessionId.subscribe(value => {
             currentSessionId = value;
@@ -288,11 +289,11 @@
             resizeTextarea();
         }, 100);
 
-        // Initial health check
-        await checkServerHealth();
-
-        // Connect WebSocket
-        await connectWebSocket();
+        // Initial health check and WebSocket connection (async operations)
+        (async () => {
+            await checkServerHealth();
+            await connectWebSocket();
+        })();
 
         return () => {
             unsubscribe();
@@ -324,7 +325,7 @@
                 <span>Elven Assistant</span>
             </div>
             <div class="status">
-                {#if isLoading}
+                {#if isLoading && false}
                     <Loader2 size={20} class="animate-spin"/>
                     <span>AI is thinking...</span>
                 {:else}

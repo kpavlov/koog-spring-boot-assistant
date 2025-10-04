@@ -7,6 +7,9 @@ build: clean
 ui:
 	cd chat-ui && npm run dev
 
+.PHONY: build-ui
+build-ui:
+	cd chat-ui && npm run build && npm run check
 
 .PHONY: test
 test:
