@@ -3,24 +3,45 @@
 [![Java CI with Maven](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml)
 [![Node.js CI](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml)
 
-This repository contains a Kotlin/Spring Boot application (module: `app`) and supporting tooling for evaluating LLM prompts. This document explains how to set up your environment, build the project with Maven, run the app, and use the included Makefile tasks for observability and prompt evaluation.
+## Overview
 
-If you're in a hurry, follow the Quick start section. Makefile commands are preferred where available.
+An AI-powered conversational assistant demonstrating 
+the [Koog](https://github.com/jetbrains/koog) framework for building intelligent agents 
+with Kotlin and Spring Boot. 
+The application features an Elven-themed chatbot that combines RAG (Retrieval-Augmented Generation), 
+session persistence, and real-time WebSocket communication.
 
-## Prerequisites
+**Key Features:**
+- 🤖 **AI Agent Workflow**: Multi-node execution graph with input moderation, LLM processing, and conditional routing
+- 💬 **Interactive Chat UI**: Svelte-based web interface with real-time WebSocket messaging
+- 📚 **RAG System**: Vector-based knowledge retrieval from markdown documents
+- 🛠️ **Custom Tools**: Extensible tool system (e.g., Elven marketplace, time conversion)
+- 🔍 **Observability**: Integrated OpenTelemetry tracing and metrics
+- 🧪 **Prompt Evaluation**: Promptfoo integration for testing and optimizing LLM prompts
+- 💾 **Session Management**: Persistent conversation state with checkpoint recovery
+
+**Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • Koog 0.5.0 • WebFlux • Svelte
+
+![screenshot-1.png](docs/screenshot-1.png)
+
+## Quickstart
+
+### Prerequisites
 - Java 17+ (JDK). Using the same JDK as your IDE is recommended.
 - Maven 3.9+
 - macOS with Homebrew for installing optional tools (or install those tools manually on your platform).
 
-## 1) Create your environment file first
+### 1) Create your environment file first
 The project includes a template for environment variables.
 
 - Copy the template and edit values as needed:
-  - `cp .env.template .env`
+  ```shell
+  cp .env.template .env
+  ```
 - At minimum, ensure your OpenAI key is available to tools that read from `.env`.
-  - In `.env` add: `OPENAI_API_KEY=sk-...`
+  In `.env` add: `OPENAI_API_KEY=sk-...`
 
-## 2) Define secrets in application properties
+### 2) Define secrets in application properties
 The Spring app reads secrets from `app/config/application.properties`.
 
 - Open app/config/application.properties and set your key(s), for example:
@@ -44,7 +65,7 @@ make no-leaks
 to make sure your secrets are not gonna be commited.
 </summary>
 
-## 3) Build the project with Maven
+### 3) Build the project with Maven
 Build the Spring Boot application (module `app`) using Maven:
 
 ```shell
@@ -53,7 +74,7 @@ mvn clean package
 
 This will produce a runnable jar under `app/target/`.
 
-## 4) Run the project
+### 4) Run the project
 
 You can run the app from your IDE (IntelliJ IDEA is recommended) or via Maven.
 
@@ -63,14 +84,25 @@ like API classes from OpenAPI, and `build-info.properties`:**
     mvn generate-resources
     ```
 - IntelliJ IDEA: Open the project, select the `Application.kt` run configuration (module `app`), and Run.
-- Maven:
-  `mvn spring-boot:run -pl :app`
-- Makefile
-    ```shell
-    make run
-    ``` 
+- Start server:
+  ```shell
+  mvn spring-boot:run -pl :app
+  ```
+  or
+  ```shell
+  make run
+  ``` 
 
-## 5) Observability: run OpenTelemetry TUI
+- Starting Web UI
+    ```shell
+    cd chat-ui && npm run dev 
+    ```
+    or
+    ```shell
+    make ui
+    ```
+
+### 5) Observability: run OpenTelemetry TUI
 Use the Makefile target to launch the [OpenTelemetry terminal UI (otel-tui)](https://github.com/ymtdzzz/otel-tui). 
 This target also cleans any process already bound to the default port.
 
@@ -84,7 +116,7 @@ Tip: If you don't have the tool, run the `prepare` target first to install it.
 make prepare
 ``` 
 
-## 6) Evaluate prompts with Promptfoo
+### 6) Evaluate prompts with Promptfoo
 Promptfoo commands are wrapped in Makefile targets and read environment from the `promptfoo/.env` file if present.
 
 - Start a continuous evaluation and write results to `promptfoo/output.yml`:
@@ -102,6 +134,8 @@ Promptfoo commands are wrapped in Makefile targets and read environment from the
 - Ensure `OPENAI_API_KEY` is present in both `.env` (for tools) and `app/config/application.properties` (for the Spring app).
 - If Maven cannot find Java, confirm `JAVA_HOME` points to a JDK (not a JRE).
 - If otel-tui or promptfoo are missing, run `make prepare` (macOS/Homebrew) or install them manually.
+
+--- 
 
 ## Project Design
 
@@ -132,26 +166,26 @@ The application consists of three main layers:
 ### Key Components
 
 #### AI Agent Workflow
-The agent implements a node-based execution graph:
+The agent implements a node-based execution graph with tool calling capabilities:
 
 ```mermaid
-graph LR
+graph TD
       Start([Start]) --> Moderate[Moderate Input<br/>OpenAI Moderation]
-      Moderate -->|isHarmful = false| LLM[LLM Request<br/>GPT-4 Mini]
+      Moderate -->|isHarmful = false| CallLLM[Call LLM<br/>GPT-5 Nano]
       Moderate -->|isHarmful = true| ErrorFinish([Finish<br/>Moderation Error])
-      LLM -->|Assistant Message| Finish([Finish<br/>Return Response])
-      LLM -.->|Exception| SystemError([Finish<br/>System Error])
-      Moderate -.->|Exception| SystemError
+      CallLLM -->|Assistant Message| Finish([Finish<br/>Return Response])
+      CallLLM -->|Tool Call| ExecuteTool[Execute Tool<br/>AssistantTools]
+      ExecuteTool --> SendToolResult[Send Tool Result<br/>to LLM]
+      SendToolResult -->|Assistant Message| Finish
+      SendToolResult -->|Tool Call| ExecuteTool
 
       style Start fill:#90EE90
       style Finish fill:#90EE90
       style ErrorFinish fill:#FFB6C6
-      style SystemError fill:#FFB6C6
       style Moderate fill:#87CEEB
-      style LLM fill:#DDA0DD
-
-
-
+      style CallLLM fill:#DDA0DD
+      style ExecuteTool fill:#FFE4B5
+      style SendToolResult fill:#E6E6FA
 ```
 
 #### RAG System

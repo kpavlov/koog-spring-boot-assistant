@@ -43,6 +43,7 @@ export class WebSocketChatClient {
     private globalMessageHandlers: ((answer: Answer) => void)[] = [];
     private sessionId: string | null = null;
     private disconnectHandlers: (() => void)[] = [];
+    private chatSessionId: string | undefined = undefined;
 
     constructor(sessionId?: string | null) {
         this.sessionId = sessionId || null;
@@ -111,6 +112,10 @@ export class WebSocketChatClient {
                             console.log('Ignoring empty message from server');
                             return;
                         }
+                        // Capture the server-assigned chatSessionId for subsequent requests
+                        if (answer.chatSessionId) {
+                            this.chatSessionId = answer.chatSessionId;
+                        }
                         // Call temporary handlers (for sendMessage responses)
                         this.messageHandlers.forEach(handler => handler(answer));
                         // Call global handlers (for greeting and other messages)
@@ -145,7 +150,7 @@ export class WebSocketChatClient {
 
             const request: ChatRequest = {
                 message: message,
-                chatSessionId: undefined
+                chatSessionId: this.chatSessionId
             };
             this.ws.send(JSON.stringify(request));
         });
