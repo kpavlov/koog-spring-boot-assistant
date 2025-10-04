@@ -16,4 +16,10 @@ management:
     otlp:
         tracing:
             export:
-                enabled: off
+                enabled: false
+        metrics:
+            export:
+                enabled: false  # Disable metrics export in tests
+spring:
+    lifecycle:
+        timeout-per-shutdown-phase: 0s  # Disable graceful shutdown in tests

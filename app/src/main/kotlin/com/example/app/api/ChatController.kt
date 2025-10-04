@@ -5,10 +5,13 @@ import com.example.app.agents.ElvenAgent
 import com.example.app.api.model.Answer
 import com.example.app.api.model.ChatRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Pattern
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 
 @Component
 class ChatController(
@@ -20,10 +23,25 @@ class ChatController(
 
     override suspend fun chat(
         @Valid @RequestBody chatRequest: ChatRequest,
+        @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+        @RequestHeader(value = "X-Session-Id", required = false)
+        xSessionId: String?,
     ): ResponseEntity<Answer> {
         logger.info("Received chat request: {}", chatRequest)
-        val sessionId = chatRequest.sessionId ?: randomSessionId()
-        val reply = agent.giveAdvice(sessionId = sessionId, input = chatRequest.message)
-        return ResponseEntity.ok(Answer(message = reply, sessionId = sessionId))
+        val sessionId = xSessionId ?: randomSessionId()
+        val reply = agent.giveAdvice(chatSessionId = sessionId, input = chatRequest.message)
+
+        val headers = HttpHeaders()
+        headers.set("X-Session-Id", sessionId)
+
+        return ResponseEntity
+            .ok()
+            .headers(headers)
+            .body(
+                Answer(
+                    message = reply,
+                    chatSessionId = sessionId,
+                ),
+            )
     }
 }

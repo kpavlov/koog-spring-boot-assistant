@@ -26,7 +26,7 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
-import com.example.app.SessionId
+import com.example.app.ChatSessionId
 import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
@@ -97,7 +97,7 @@ class ElvenAgent(
 
     suspend fun giveAdvice(
         input: String,
-        sessionId: SessionId,
+        chatSessionId: ChatSessionId,
     ): String =
         try {
             val relevantDocuments =
@@ -114,7 +114,7 @@ class ElvenAgent(
 
             val agent =
                 AIAgent(
-                    id = sessionId,
+                    id = chatSessionId,
                     promptExecutor = promptExecutor,
                     agentConfig =
                         AIAgentConfig(

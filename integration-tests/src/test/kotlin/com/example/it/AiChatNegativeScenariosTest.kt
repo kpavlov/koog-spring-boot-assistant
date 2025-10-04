@@ -34,7 +34,7 @@ class AiChatNegativeScenariosTest : AbstractIntegrationTest() {
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
-                sessionId shouldNotBe null
+                chatSessionId shouldNotBe null
             }
         }
 }
