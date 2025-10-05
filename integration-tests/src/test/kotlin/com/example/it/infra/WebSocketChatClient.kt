@@ -1,6 +1,7 @@
 package com.example.it.infra
 
 import com.example.it.client.model.Answer
+import com.example.it.client.model.ChatRequest
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.awaitility.kotlin.await
@@ -115,9 +116,4 @@ class WebSocketChatClient(
             webSocketSession = null
         }
     }
-
-    @kotlinx.serialization.Serializable
-    private data class ChatRequest(
-        val message: String,
-    )
 }

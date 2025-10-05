@@ -9,6 +9,7 @@ abstract class AbstractIntegrationTest {
     protected val server = Server
 
     protected val chatClient = ChatClient(server.port)
+    protected val koogClient = KoogClient(server.port)
 
     @BeforeEach
     fun awaitServer() {

@@ -1,8 +1,8 @@
 package com.example.it
 
 import com.example.it.client.model.Answer
-import com.example.it.client.model.ChatRequest
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -15,9 +15,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-class ChatClient(
+class KoogClient(
     val port: Int,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -30,37 +31,12 @@ class ChatClient(
             }
         }
 
-    suspend fun version(): String {
+    suspend fun mermaid(): String {
         val response =
-            client.get("http://localhost:$port/api/version") {
+            client.get("http://localhost:$port/api/koog/strategy/graph") {
                 accept(ContentType.Text.Plain)
             }
+        response.status shouldBe HttpStatusCode.OK
         return response.bodyAsText()
-    }
-
-    suspend fun sendMessage(
-        message: String,
-        expectedStatusCode: HttpStatusCode = HttpStatusCode.OK,
-    ): Answer {
-        val response =
-            client.post("http://localhost:$port/api/chat") {
-                contentType(ContentType.Application.Json)
-                setBody(
-                    ChatRequest(
-                        message = message,
-                    ),
-                )
-            }
-
-        if (response.status != expectedStatusCode) {
-            logger.error(
-                "Received unexpected response: Headers: {}\nBody:\n{}",
-                response.headers,
-                response.bodyAsText(),
-            )
-        }
-        response.status shouldBe expectedStatusCode
-
-        return response.body<Answer>()
     }
 }
