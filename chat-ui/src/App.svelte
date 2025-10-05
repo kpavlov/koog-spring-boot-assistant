@@ -5,6 +5,9 @@
     import {sessionId} from './lib/session';
     import {marked} from 'marked';
 
+    // Get base URL for asset paths
+    const baseUrl = import.meta.env.BASE_URL || '/';
+
     interface Message {
         id: string;
         text: string;
@@ -368,7 +371,7 @@
         showHelpMenu = false;
         if (!instructionsContent) {
             try {
-                const response = await fetch('/setup-instructions.md');
+                const response = await fetch(`${baseUrl}setup-instructions.md`);
                 instructionsContent = await response.text();
             } catch (error) {
                 console.error('Failed to load instructions:', error);
@@ -513,7 +516,7 @@
     <header class="chat-header">
         <div class="header-content">
             <div class="ai-indicator">
-                <img src="/logo.png" alt="Elven Assistant" class="header-avatar"/>
+                <img src="{baseUrl}logo.png" alt="Elven Assistant" class="header-avatar"/>
                 <span>Elven Assistant</span>
             </div>
             <div class="header-right">
@@ -562,7 +565,7 @@
                     {#if message.isUser}
                         <User size={24}/>
                     {:else}
-                        <img src="/elf.png" alt="Elven Assistant" class="avatar-image"/>
+                        <img src="{baseUrl}elf.png" alt="Elven Assistant" class="avatar-image"/>
                     {/if}
                 </div>
                 <div class="message-content">
