@@ -1,0 +1,77 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Deploy to GitHub Pages
+
+on:
+#  push:
+#    branches: [ "main" ]
+#    paths:
+#      - 'chat-ui/**'
+#      - 'docs/**'
+#  pull_request:
+#    branches: [ "main" ]
+#    paths:
+#      - 'chat-ui/**'
+#      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: chat-ui
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v5
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'chat-ui/package-lock.json'
+    - run: npm ci
+    - name: Build with base URL for GitHub Pages
+      run: npm run build
+      env:
+        BASE_URL: /koog-spring-boot-assistant/
+    - run: npm run check
+    - name: Prepare deployment directory
+      run: |
+        mkdir -p ../deploy
+        cp -r dist/* ../deploy/
+        cp -r ../docs/*.yaml ../deploy/docs/
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v4
+      # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      with:
+        path: 'deploy'
+
+  deploy:
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
