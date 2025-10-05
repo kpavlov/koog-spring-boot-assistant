@@ -179,12 +179,12 @@
     .modal-close {
         background: none;
         border: none;
-        font-size: 2.5rem;
+        font-size: var(--fs-modal-close);
         color: #6b7280;
         cursor: pointer;
         padding: 0;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: var(--size-modal-close);
+        height: var(--size-modal-close);
         display: flex;
         align-items: center;
         justify-content: center;

@@ -1,10 +1,12 @@
 <script lang="ts">
     import {afterUpdate, onDestroy, onMount} from 'svelte';
-    import {Loader2, Send, User, HelpCircle, ChevronDown} from 'lucide-svelte';
+    import {Loader2, User, HelpCircle, ChevronDown} from 'lucide-svelte';
     import {ApiError, getApiVersion, getStrategyGraph, WebSocketChatClient} from './lib/api';
     import {sessionId} from './lib/session';
     import {marked} from 'marked';
     import DiagramViewer from './components/DiagramViewer.svelte';
+    import ThemeToggle from './components/ThemeToggle.svelte';
+    import ModeToggle from './components/ModeToggle.svelte';
     import type {Message} from './components/ChatMessages.svelte';
 
     // Get base URL for asset paths
@@ -525,23 +527,11 @@
                 <span>Elven Assistant</span>
             </div>
             <div class="header-right">
-                <div class="status {!isServerOnline ? 'clickable' : ''}" on:click={handleOfflineClick}>
-                    {#if isLoading && false}
-                        <Loader2 size={20} class="animate-spin"/>
-                        <span>AI is thinking...</span>
-                    {:else}
-                        <div class="status-dot {isServerOnline ? 'online' : 'offline'}"></div>
-                        <span>
-                {isServerOnline ? 'Online' : 'Offline'}
-                            {#if serverVersion}
-                  <sup>{serverVersion}</sup>
-                {/if}
-              </span>
-                    {/if}
-                </div>
+                <ThemeToggle />
+                <ModeToggle />
                 <div class="help-menu-container">
                     <button class="help-button" on:click={toggleHelpMenu} title="Help">
-                        <HelpCircle size={24}/>
+                        <HelpCircle size={20}/>
                         <ChevronDown size={16} class="chevron {showHelpMenu ? 'open' : ''}"/>
                     </button>
                     {#if showHelpMenu}
@@ -559,6 +549,24 @@
                                 Show Koog Strategy
                             </button>
                         </div>
+                    {/if}
+                </div>
+                <div
+                    class="status {!isServerOnline ? 'clickable' : ''}"
+                    on:click={handleOfflineClick}
+                    title="{isServerOnline ? 'Online' : 'Offline'}"
+                >
+                    {#if isLoading && false}
+                        <Loader2 size={20} class="animate-spin"/>
+                        <span class="status-text">AI is thinking...</span>
+                    {:else}
+                        <div class="status-dot {isServerOnline ? 'online' : 'offline'}"></div>
+                        <span class="status-text">
+                {isServerOnline ? 'Online' : 'Offline'}
+                            {#if serverVersion}
+                  <sup>{serverVersion}</sup>
+                {/if}
+              </span>
                     {/if}
                 </div>
             </div>
@@ -615,17 +623,6 @@
           class="message-input"
           tabindex="1"
       ></textarea>
-            <button
-                on:click={sendMessage}
-                disabled={isLoading || !currentMessage.trim() || !isServerOnline}
-                class="send-button"
-            >
-                {#if isLoading}
-                    <Loader2 size={24} class="animate-spin"/>
-                {:else}
-                    <Send size={24}/>
-                {/if}
-            </button>
         </div>
     </div>
 
@@ -686,11 +683,19 @@
         box-shadow: 0 0 100px rgba(0, 0, 0, 0.3);
     }
 
+    /* Full width on narrow screens */
+    @media (max-width: 1024px) {
+        .chat-app {
+            width: 100%;
+            box-shadow: none;
+        }
+    }
+
     /* Header */
     .chat-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--gradient-header);
         color: white;
-        padding: 1.5rem 2rem;
+        padding: var(--spacing-header);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
@@ -700,23 +705,25 @@
         align-items: center;
         max-width: 1400px;
         margin: 0 auto;
+        gap: 2rem;
     }
 
     .ai-indicator {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        font-size: 3rem;
+        font-size: var(--fs-header-title);
         font-weight: 600;
-        font-family: fantasy, 'Times New Roman', serif;
+        font-family: var(--font-fantasy);
         letter-spacing: 0.05em;
         text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6);
         animation: gentle-glow 3s ease-in-out infinite alternate;
+        white-space: nowrap;
     }
 
     .header-avatar {
-        width: 5rem;
-        height: 5rem;
+        width: var(--size-header-avatar);
+        height: var(--size-header-avatar);
         border-radius: 50%;
         object-fit: cover;
         border: 6px solid rgba(255, 255, 255, 0.5);
@@ -725,16 +732,17 @@
     .header-right {
         display: flex;
         align-items: center;
-        gap: 1.5rem;
+        gap: 0.5rem;
     }
 
     .status {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 1.5rem;
+        font-size: var(--fs-header-status);
         font-weight: bold;
         opacity: 0.9;
+        white-space: nowrap;
     }
 
     .status.clickable {
@@ -758,19 +766,20 @@
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        border: none;
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
         cursor: pointer;
         transition: all 0.2s;
         font-size: 1rem;
+        opacity: 0.7;
     }
 
     .help-button:hover {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 1;
     }
 
     .help-button .chevron {
@@ -785,7 +794,7 @@
         position: absolute;
         top: calc(100% + 0.5rem);
         right: 0;
-        background: #764ba2;
+        background: var(--gradient-help-dropdown);
         border-radius: 0.5rem;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         width: max-content;
@@ -803,7 +812,7 @@
         text-align: left;
         cursor: pointer;
         transition: background 0.2s;
-        font-size: 1.5rem;
+        font-size: var(--fs-help-menu);
         white-space: nowrap;
     }
 
@@ -830,7 +839,7 @@
     }
 
     .modal-content {
-        background: white;
+        background: var(--color-modal-bg);
         border-radius: 1rem;
         max-width: 900px;
         width: 90%;
@@ -844,25 +853,25 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 2rem 3rem;
-        border-bottom: 2px solid #e5e7eb;
+        padding: var(--spacing-modal-header);
+        border-bottom: 2px solid var(--color-modal-border);
     }
 
     .modal-header h2 {
         margin: 0;
-        font-size: 2rem;
-        color: #1f2937;
+        font-size: var(--fs-modal-title);
+        color: var(--color-modal-text);
     }
 
     .modal-close {
         background: none;
         border: none;
-        font-size: 2.5rem;
-        color: #6b7280;
+        font-size: var(--fs-modal-close);
+        color: var(--color-text-secondary);
         cursor: pointer;
         padding: 0;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: var(--size-modal-close);
+        height: var(--size-modal-close);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -871,18 +880,18 @@
     }
 
     .modal-close:hover {
-        background: #f3f4f6;
-        color: #1f2937;
+        background: var(--color-code-bg);
+        color: var(--color-modal-text);
     }
 
     .modal-body {
         padding: 3rem;
         overflow-y: auto;
-        font-size: 1.2rem;
+        font-size: var(--fs-modal-body);
     }
 
     .modal-body .markdown-content {
-        color: #1f2937;
+        color: var(--color-modal-text);
     }
 
     .modal-body .markdown-content h1 {
@@ -899,16 +908,17 @@
     }
 
     .modal-body .markdown-content code {
-        background: #f3f4f6;
-        color: #dc2626;
+        background: var(--color-code-bg);
+        color: var(--color-code-text);
         padding: 0.2em 0.4em;
         border-radius: 0.25rem;
         font-size: 0.9em;
+        font-family: var(--font-mono);
     }
 
     .modal-body .markdown-content pre {
-        background: #1f2937;
-        color: #f9fafb;
+        background: var(--color-pre-bg);
+        color: var(--color-pre-text);
         padding: 1.5rem;
         border-radius: 0.5rem;
         overflow-x: auto;
@@ -977,7 +987,7 @@
     }
 
     .toast {
-        background: white;
+        background: var(--color-toast-bg);
         border-radius: 1.5rem;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         padding: 3rem 3.5rem;
@@ -988,7 +998,7 @@
         gap: 2rem;
         cursor: pointer;
         transition: all 0.2s;
-        border: 4px solid #8b5cf6;
+        border: 4px solid var(--color-toast-border);
     }
 
     .toast:hover {
@@ -1003,7 +1013,7 @@
     }
 
     .toast-icon {
-        font-size: 8rem;
+        font-size: var(--fs-toast-icon);
         line-height: 1;
         flex-shrink: 0;
     }
@@ -1014,15 +1024,15 @@
 
     .toast-title {
         font-weight: 700;
-        font-size: 2rem;
-        color: #1f2937;
+        font-size: var(--fs-toast-title);
+        color: var(--color-modal-text);
         margin-bottom: 0.75rem;
-        font-family: fantasy, 'Times New Roman', serif;
+        font-family: var(--font-fantasy);
     }
 
     .toast-subtitle {
-        font-size: 1.8rem;
-        color: #6b7280;
+        font-size: var(--fs-toast-subtitle);
+        color: var(--color-text-secondary);
         line-height: 1.6;
     }
 
@@ -1030,7 +1040,7 @@
         background: none;
         border: none;
         font-size: 2.5rem;
-        color: #9ca3af;
+        color: var(--color-text-tertiary);
         cursor: pointer;
         padding: 0;
         width: 2.5rem;
@@ -1044,8 +1054,8 @@
     }
 
     .toast-dismiss:hover {
-        background: #f3f4f6;
-        color: #1f2937;
+        background: var(--color-code-bg);
+        color: var(--color-modal-text);
     }
 
     .status sup {
@@ -1061,19 +1071,26 @@
     }
 
     .status-dot.online {
-        background: #10b981;
+        background: var(--color-status-online);
     }
 
     .status-dot.offline {
-        background: #ef4444;
+        background: var(--color-status-offline);
+    }
+
+    /* Hide status text on small screens only */
+    @media (max-width: 640px) {
+        .status-text {
+            display: none;
+        }
     }
 
     /* Chat Container */
     .chat-container {
         flex: 1;
         overflow-y: auto;
-        padding: 2rem;
-        background: #f8fafc;
+        padding: var(--spacing-chat);
+        background: var(--color-chat-bg);
         scroll-behavior: smooth;
         max-width: 1400px;
         margin: 0 auto;
@@ -1087,6 +1104,7 @@
         display: flex;
         margin-bottom: 2rem;
         max-width: 80%;
+        align-items: flex-end;
     }
 
     .message-wrapper.user-message {
@@ -1099,25 +1117,27 @@
     }
 
     .avatar {
-        width: 6rem;
-        height: 6rem;
+        width: var(--size-avatar);
+        height: var(--size-avatar);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 1rem;
+        margin: 0 1rem 0 0;
         flex-shrink: 0;
     }
 
     .user-message .avatar {
-        background: #2563eb;
+        background: var(--color-user-bubble);
         color: white;
+        margin: 0 0 0 1rem;
     }
 
     .ai-message .avatar {
-        background: #8b5cf6;
+        background: var(--color-accent);
         color: white;
         overflow: hidden;
+        margin: 0 1rem 0 0;
     }
 
     .avatar-image {
@@ -1133,29 +1153,29 @@
     }
 
     .message-bubble {
-        padding: 1.25rem 1.75rem;
+        padding: var(--spacing-message-bubble);
         border-radius: 1.5rem;
-        font-size: 3rem;
+        font-size: var(--fs-message-bubble);
         line-height: 1.2;
         word-wrap: break-word;
         word-break: break-word;
         overflow-wrap: break-word;
         hyphens: auto;
         max-width: 100%;
-        font-family: Georgia, 'Times New Roman', serif;
+        font-family: var(--font-serif);
     }
 
     .user-message .message-bubble {
-        background: #2563eb;
+        background: var(--color-user-bubble);
         color: white;
         border-bottom-right-radius: 0.5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .ai-message .message-bubble {
-        background: white;
-        color: #1f2937;
-        border: 1px solid #e5e7eb;
+        background: var(--color-ai-bubble-bg);
+        color: var(--color-ai-bubble-text);
+        border: 1px solid var(--color-border);
         border-bottom-left-radius: 0.5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
@@ -1193,23 +1213,25 @@
     }
 
     .markdown-content code {
-        background: rgba(0, 0, 0, 0.05);
+        background: var(--color-code-bg);
         padding: 0.2em 0.4em;
         border-radius: 0.3rem;
-        font-family: 'Courier New', 'Consolas', monospace;
+        font-family: var(--font-mono);
         font-size: 0.9em;
     }
 
     .ai-message .markdown-content code {
-        background: rgba(0, 0, 0, 0.05);
+        background: var(--color-code-bg);
+        color: var(--color-code-text);
     }
 
     .user-message .markdown-content code {
         background: rgba(255, 255, 255, 0.2);
+        color: white;
     }
 
     .markdown-content pre {
-        background: rgba(0, 0, 0, 0.05);
+        background: var(--color-code-bg);
         padding: 1rem;
         border-radius: 0.5rem;
         overflow-x: auto;
@@ -1262,7 +1284,7 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background-color: #6b7280;
+        background-color: var(--color-text-secondary);
         animation: dot-bounce 1.4s infinite ease-in-out both;
     }
 
@@ -1286,7 +1308,7 @@
     .message-time {
         display: none; /* hide it temporary */
         font-size: 1.5rem;
-        color: #6b7280;
+        color: var(--color-text-secondary);
         margin-top: 0.5rem;
         padding: 0 0.5rem;
     }
@@ -1297,9 +1319,9 @@
 
     /* Input Container */
     .input-container {
-        background: white;
-        border-top: 2px solid #e5e7eb;
-        padding: 1.5rem 2rem 2rem;
+        background: var(--color-input-bg);
+        border-top: 2px solid var(--color-border);
+        padding: var(--spacing-input);
     }
 
     .input-container.disabled {
@@ -1317,55 +1339,32 @@
 
     .message-input {
         flex: 1;
-        border: 4px solid #e5e7eb;
+        border: 4px solid var(--color-input-border);
         border-radius: 1.5rem;
-        padding: 1.25rem 1.75rem;
-        font-size: 3rem;
-        font-family: inherit;
+        padding: var(--spacing-input-padding);
+        font-size: var(--fs-input);
+        font-family: var(--font-sans);
+        background: var(--color-input-bg);
+        color: var(--color-input-text);
         resize: none;
         outline: none;
         transition: border-color 0.2s;
-        min-height: 3.5rem;
+        min-height: var(--size-input-min-height);
         max-height: 30vh;
         overflow-y: auto;
-        caret-color: #2563eb;
+        caret-color: var(--color-user-bubble);
         caret-width: 4px;
     }
 
     .message-input:focus {
-        border-color: #3b82f6;
+        border-color: var(--color-input-border-focus);
     }
 
     .message-input:disabled {
-        background: #f9fafb;
+        background: var(--color-code-bg);
         cursor: not-allowed;
     }
 
-    .send-button {
-        width: 3.5rem;
-        height: 3.5rem;
-        border: none;
-        border-radius: 50%;
-        background: #3b82f6;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .send-button:hover:not(:disabled) {
-        background: #2563eb;
-        transform: scale(1.05);
-    }
-
-    .send-button:disabled {
-        background: #9ca3af;
-        cursor: not-allowed;
-        transform: none;
-    }
 
     /* Animations */
     @keyframes pulse {
@@ -1399,150 +1398,11 @@
         }
     }
 
-    /* Dark mode */
-    @media (prefers-color-scheme: dark) {
-        .chat-app {
-            background: #1f2937;
-        }
-
-        .chat-container {
-            background: #111827;
-        }
-
-        .ai-message .message-bubble {
-            background: #374151;
-            color: #f9fafb;
-            border-color: #4b5563;
-        }
-
-        .input-container {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        .message-input {
-            background: #374151;
-            color: #f9fafb;
-            border-color: #4b5563;
-        }
-
-        .message-input:focus {
-            border-color: #3b82f6;
-        }
-
-        .message-time {
-            color: #9ca3af;
-        }
-
-        .help-dropdown {
-            background: #4c2e70;
-        }
-
-        .help-menu-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .modal-content {
-            background: #1f2937;
-        }
-
-        .modal-header {
-            border-bottom-color: #4b5563;
-        }
-
-        .modal-header h2 {
-            color: #f9fafb;
-        }
-
-        .modal-close {
-            color: #9ca3af;
-        }
-
-        .modal-close:hover {
-            background: #374151;
-            color: #f9fafb;
-        }
-
-        .modal-body .markdown-content {
-            color: #f9fafb;
-        }
-
-        .modal-body .markdown-content code {
-            background: #374151;
-            color: #fbbf24;
-        }
-
-        .modal-body .markdown-content pre {
-            background: #111827;
-            border: 1px solid #4b5563;
-        }
-
-        .toast {
-            background: #1f2937;
-            border-color: #8b5cf6;
-        }
-
-        .toast:hover {
-            box-shadow: 0 15px 50px rgba(139, 92, 246, 0.4);
-        }
-
-        .toast-title {
-            color: #f9fafb;
-        }
-
-        .toast-subtitle {
-            color: #d1d5db;
-        }
-
-        .toast-dismiss {
-            color: #6b7280;
-        }
-
-        .toast-dismiss:hover {
-            background: #374151;
-            color: #f9fafb;
-        }
-
-    }
-
-    /* Large screen optimizations for presentations */
-    @media (min-width: 1920px) {
-        .chat-header {
-            padding: 2rem 3rem;
-        }
-
-        .ai-indicator {
-            font-size: 2.25rem;
-        }
-
-        .chat-container {
-            padding: 3rem;
-        }
-
-        .message-bubble {
-            padding: 1.5rem 2rem;
-            font-size: 1.3rem;
-        }
-
-        .avatar {
-            width: 4rem;
-            height: 4rem;
-            margin: 0 1.5rem;
-        }
-
-        .input-container {
-            padding: 2rem 3rem 2.5rem;
-        }
-
-        .message-input {
-            padding: 1.5rem 2rem;
-            font-size: 1.3rem;
-            min-height: 4rem;
-        }
-
-        .send-button {
-            width: 4rem;
-            height: 4rem;
+    /* Hide ModeToggle when chat-app is at 100% width (on smaller screens) */
+    @media (max-width: 1024px) {
+        :global(.mode-toggle) {
+            display: none !important;
         }
     }
+
 </style>

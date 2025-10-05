@@ -134,6 +134,7 @@
         font-size: 1.5rem;
         font-weight: bold;
         opacity: 0.9;
+        white-space: nowrap;
     }
 
     .status.clickable {

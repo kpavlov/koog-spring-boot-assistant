@@ -2,6 +2,8 @@ package com.example.app.koog.strategy
 
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.agent.entity.AIAgentNode
+import ai.koog.agents.core.agent.entity.FinishNode
+import ai.koog.agents.core.agent.entity.StartNode
 
 /**
  * AIAgentGraphStrategy utility for generating Mermaid diagrams from agent strategies.
@@ -20,6 +22,7 @@ public fun <I : Any, O : Any> AIAgentGraphStrategy<I, O>.createMermaidDiagram():
  * Data class representing collected graph information for mermaid diagram generation.
  */
 private data class GraphData(
+    val title: String,
     val nodes: Map<String, AIAgentNode<*, *>>,
     val edges: List<EdgeInfo>,
 )
@@ -68,7 +71,11 @@ private fun <I : Any, O : Any> AIAgentGraphStrategy<I, O>.collectGraphData(): Gr
 
     collectEdgesRecursively(allNodes, edges, nodes)
 
-    return GraphData(nodes.toMap(), edges.toList())
+    return GraphData(
+        title = this.name,
+        nodes = nodes.toMap(),
+        edges = edges.toList(),
+    )
 }
 
 /**
@@ -183,24 +190,25 @@ private fun extractConditionFromString(str: String): String? =
  */
 private fun GraphData.toMermaidDiagram(): String =
     buildString {
-        appendLine("graph TD")
+        appendLine("---")
+        appendLine("title: $title")
+        appendLine("---")
+        appendLine("stateDiagram")
 
         // Render nodes
-        nodes.values.forEach { node ->
-            appendLine("    ${node.toMermaidNode()}")
-        }
+        nodes.values
+            .filterNot { it is StartNode }
+            .filterNot { it is FinishNode }
+            .forEach { node ->
+                appendLine("    ${node.toMermaidNode()}")
+            }
 
         // Add blank line before edges if there are any
         if (edges.isNotEmpty()) {
             appendLine()
             // Render edges
-            edges.forEachIndexed { index, edge ->
-                if (index == edges.size - 1) {
-                    // Last edge - don't add newline
-                    append("    ${edge.toMermaidEdge()}")
-                } else {
-                    appendLine("    ${edge.toMermaidEdge()}")
-                }
+            edges.forEach { edge ->
+                appendLine("    ${edge.toMermaidEdge()}")
             }
         }
     }.trimEnd()
@@ -208,14 +216,48 @@ private fun GraphData.toMermaidDiagram(): String =
 /**
  * Extension function to render an EdgeInfo as a mermaid edge string.
  */
-private fun EdgeInfo.toMermaidEdge(): String =
-    if (condition != null && condition.isNotBlank()) {
-        "${fromNode.id} --> |\"$condition\"| ${toNode.id}"
+private fun EdgeInfo.toMermaidEdge(): String {
+    val fromId = fromNode.toMermaidNodeRef()
+    val toId = toNode.toMermaidNodeRef()
+
+    return if (condition != null && condition.isNotBlank()) {
+        "$fromId --> $toId : $condition"
     } else {
-        "${fromNode.id} --> ${toNode.id}"
+        "$fromId --> $toId"
     }
+}
 
 /**
  * Extension function to render an AIAgentNode as a mermaid node string.
  */
-private fun AIAgentNode<*, *>.toMermaidNode(): String = "$id[\"${name}\"]"
+private fun AIAgentNode<*, *>.toMermaidNode(): String =
+    when (this) {
+        is StartNode -> {
+            "[*]"
+        }
+        is FinishNode -> {
+            "[*]"
+        }
+        else -> {
+            "state \"${name}\" as ${id.replace("-", "_")}"
+        }
+    }
+
+/**
+ * Converts an AIAgentNode to its mermaid node reference representation.
+ *
+ * @return A string representing the mermaid node reference. For StartNode and FinishNode,
+ * it returns "[*]". For other nodes, it converts the node ID by replacing dashes with underscores.
+ */
+private fun AIAgentNode<*, *>.toMermaidNodeRef(): String =
+    when (this) {
+        is StartNode -> {
+            "[*]"
+        }
+        is FinishNode -> {
+            "[*]"
+        }
+        else -> {
+            id.replace("-", "_")
+        }
+    }
