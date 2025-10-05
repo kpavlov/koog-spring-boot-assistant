@@ -34,14 +34,24 @@ otel:
 	#open -a Terminal otel-tui
 	#otel-tui
 
-.PHONY: promptfoo
-promptfoo:
-	(cd promptfoo && promptfoo eval --watch --output output.yml --env-file .env)
+.PHONY: pf-e2e
+pf-e2e:
+	(cd promptfoo/e2e && promptfoo eval --watch --output output.yml --env-file .env)
 	#(cd promptfoo && promptfoo eval --watch --output output.yml --no-progress-bar --env-file .env)
 
-.PHONY: promptfoo-ui
-promptfoo-ui:
-	(cd promptfoo && promptfoo view --yes --env-file .env)
+.PHONY: pf-e2e-ui
+pf-e2e-ui:
+	(cd promptfoo/e2e && promptfoo view --yes --env-file .env)
+
+.PHONY: pf-prompts
+pf-prompts:
+	(cd promptfoo/prompts && promptfoo eval --watch --output output.yml --env-file .env)
+	#(cd promptfoo && promptfoo eval --watch --output output.yml --no-progress-bar --env-file .env)
+
+
+.PHONY: pf-prompts-ui
+pf-prompts-ui:
+	(cd promptfoo/prompts && promptfoo view --yes --env-file .env)
 
 
 prepare:

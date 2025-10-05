@@ -122,12 +122,12 @@ Promptfoo commands are wrapped in Makefile targets and read environment from the
 - Start a continuous evaluation and write results to `promptfoo/output.yml`:
 
     ```shell
-    make propmtfoo
+    make pf-e2e
     ``` 
 - Launch the Promptfoo UI to explore results:
 
     ```shell
-    make promptfoo-ui
+    make pf-e2e-ui
     ```
 
 ## Troubleshooting
@@ -171,7 +171,7 @@ The agent implements a node-based execution graph with tool calling capabilities
 ```mermaid
 graph TD
       Start([Start]) --> Moderate[Moderate Input<br/>OpenAI Moderation]
-      Moderate -->|isHarmful = false| CallLLM[Call LLM<br/>GPT-5 Nano]
+      Moderate -->|isHarmful = false| CallLLM[Call LLM]
       Moderate -->|isHarmful = true| ErrorFinish([Finish<br/>Moderation Error])
       CallLLM -->|Assistant Message| Finish([Finish<br/>Return Response])
       CallLLM -->|Tool Call| ExecuteTool[Execute Tool<br/>AssistantTools]
