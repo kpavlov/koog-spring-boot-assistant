@@ -83,6 +83,21 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Answer'
+    /api/koog/strategy/graph:
+        get:
+            summary: Get strategy graph diagram
+            description: Returns a Mermaid diagram text representation of the strategy graph
+            operationId: getStrategyGraph
+            tags:
+                - koog
+            responses:
+                '200':
+                    description: Mermaid diagram text for strategy graph
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: "graph TD\n    A[Strategy] --> B[Implementation]\n    B --> C[Results]"
 components:
     parameters:
         SessionIdParam:

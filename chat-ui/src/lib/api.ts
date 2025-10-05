@@ -37,6 +37,26 @@ export async function getApiVersion(): Promise<string> {
     }
 }
 
+export async function getStrategyGraph(): Promise<string> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/koog/strategy/graph`, {
+            headers: {
+                Accept: 'text/plain',
+            },
+        });
+        if (!response.ok) {
+            throw new ApiError(`Failed to get strategy graph: ${response.statusText}`, response.status);
+        }
+
+        return await response.text();
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+}
+
 export class WebSocketChatClient {
     private ws: WebSocket | null = null;
     private messageHandlers: ((answer: Answer) => void)[] = [];

@@ -1,19 +1,14 @@
 <script lang="ts">
     import {afterUpdate, onDestroy, onMount} from 'svelte';
     import {Loader2, Send, User, HelpCircle, ChevronDown} from 'lucide-svelte';
-    import {ApiError, getApiVersion, WebSocketChatClient} from './lib/api';
+    import {ApiError, getApiVersion, getStrategyGraph, WebSocketChatClient} from './lib/api';
     import {sessionId} from './lib/session';
     import {marked} from 'marked';
+    import DiagramViewer from './components/DiagramViewer.svelte';
+    import type {Message} from './components/ChatMessages.svelte';
 
     // Get base URL for asset paths
     const baseUrl = import.meta.env.BASE_URL || '/';
-
-    interface Message {
-        id: string;
-        text: string;
-        isUser: boolean;
-        timestamp: Date;
-    }
 
     let messages: Message[] = [];
 
@@ -32,6 +27,7 @@
     let showHelpMenu = false;
     let showInstructionsModal = false;
     let instructionsContent = '';
+    let showStrategyDiagram = false;
     let showOfflineToast = false;
     let offlineToastTimer: number | null = null;
     let toastDismissCount = 0;
@@ -385,6 +381,15 @@
         showInstructionsModal = false;
     }
 
+    function showStrategy() {
+        showHelpMenu = false;
+        showStrategyDiagram = true;
+    }
+
+    function closeStrategyDiagram() {
+        showStrategyDiagram = false;
+    }
+
     function openInstructionsFromToast() {
         showOfflineToast = false;
         showInstructions();
@@ -550,6 +555,9 @@
                             <button class="help-menu-item" on:click={showInstructions}>
                                 Setup Instructions
                             </button>
+                            <button class="help-menu-item" on:click={showStrategy}>
+                                Show Koog Strategy
+                            </button>
                         </div>
                     {/if}
                 </div>
@@ -637,6 +645,15 @@
             </div>
         </div>
     {/if}
+
+    <!-- Strategy Diagram -->
+    <DiagramViewer
+        title="Koog Strategy Graph"
+        diagramFetcher={getStrategyGraph}
+        isOpen={showStrategyDiagram}
+        modalId="strategy-diagram"
+        on:close={closeStrategyDiagram}
+    />
 
     <!-- Offline Toast Notification -->
     {#if showOfflineToast}
@@ -901,6 +918,42 @@
         background: none;
         color: inherit;
         padding: 0;
+    }
+
+
+    /* Mermaid diagram styles for regular modals */
+    .mermaid-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        width: 100%;
+    }
+
+    .mermaid-content {
+        width: 100%;
+        text-align: center;
+    }
+
+    .mermaid-content :global(svg) {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .loading-message {
+        color: #6b7280;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .error {
+        color: #dc2626;
+        font-size: 1.2rem;
+        text-align: center;
+        padding: 2rem;
+        background: #fef2f2;
+        border-radius: 0.5rem;
+        border: 1px solid #fecaca;
     }
 
     /* Toast Notification */
@@ -1449,6 +1502,7 @@
             background: #374151;
             color: #f9fafb;
         }
+
     }
 
     /* Large screen optimizations for presentations */
