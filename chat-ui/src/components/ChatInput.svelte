@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {Send, Loader2} from 'lucide-svelte';
 
     export let currentMessage: string;
     export let isLoading: boolean;
@@ -44,28 +43,19 @@
 
 <div class="input-container {isLoading ? 'disabled' : ''}">
     <div class="input-wrapper">
-        <textarea
-            bind:this={messageInput}
-            value={currentMessage}
-            on:input={handleInput}
-            on:keypress={handleKeyPress}
-            placeholder="Type your message here..."
-            rows="1"
-            disabled={isLoading}
-            class="message-input"
-            tabindex="1"
-        ></textarea>
-        <button
-            on:click={onSend}
-            disabled={isLoading || !currentMessage.trim() || !isServerOnline}
-            class="send-button"
-        >
-            {#if isLoading}
-                <Loader2 size={24} class="animate-spin"/>
-            {:else}
-                <Send size={24}/>
-            {/if}
-        </button>
+        <div class="textarea-container">
+            <textarea
+                bind:this={messageInput}
+                value={currentMessage}
+                on:input={handleInput}
+                on:keypress={handleKeyPress}
+                placeholder="Type your message here..."
+                rows="1"
+                disabled={isLoading}
+                class="message-input"
+                tabindex="1"
+            ></textarea>
+        </div>
     </div>
 </div>
 
@@ -73,7 +63,7 @@
     .input-container {
         background: white;
         border-top: 2px solid #e5e7eb;
-        padding: 1.5rem 2rem 2rem;
+        padding: var(--spacing-input);
     }
 
     .input-container.disabled {
@@ -83,17 +73,22 @@
 
     .input-wrapper {
         display: flex;
-        gap: 1rem;
         max-width: 1400px;
         margin: 0 auto;
         align-items: end;
     }
 
-    .message-input {
+    .textarea-container {
+        position: relative;
         flex: 1;
+        width: 100%;
+    }
+
+    .message-input {
+        width: 100%;
         border: 4px solid #e5e7eb;
         border-radius: 1.5rem;
-        padding: 1.25rem 1.75rem;
+        padding: var(--spacing-input-padding);
         font-size: 3rem;
         font-family: inherit;
         resize: none;
@@ -115,44 +110,6 @@
         cursor: not-allowed;
     }
 
-    .send-button {
-        width: 3.5rem;
-        height: 3.5rem;
-        border: none;
-        border-radius: 50%;
-        background: #3b82f6;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .send-button:hover:not(:disabled) {
-        background: #2563eb;
-        transform: scale(1.05);
-    }
-
-    .send-button:disabled {
-        background: #9ca3af;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    :global(.animate-spin) {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
 
     @media (prefers-color-scheme: dark) {
         .input-container {
@@ -173,18 +130,13 @@
 
     @media (min-width: 1920px) {
         .input-container {
-            padding: 2rem 3rem 2.5rem;
+            padding: var(--spacing-input);
         }
 
         .message-input {
-            padding: 1.5rem 2rem;
-            font-size: 1.3rem;
-            min-height: 4rem;
-        }
-
-        .send-button {
-            width: 4rem;
-            height: 4rem;
+            padding: var(--spacing-input-padding);
+            font-size: var(--fs-input);
+            min-height: var(--size-input-min-height);
         }
     }
 </style>

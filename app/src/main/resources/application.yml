@@ -16,6 +16,7 @@ ai:
 logging:
   level:
     "ai.koog": info
+    "io.opentelemetry.exporter": off
     "io.micrometer.registry.otlp": error
     "org.springframework.web": info
 

@@ -86,6 +86,7 @@
         display: flex;
         margin-bottom: 2rem;
         max-width: 80%;
+        align-items: flex-end;
     }
 
     .message-wrapper.user-message {
@@ -104,19 +105,21 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 1rem;
+        margin: 0 1rem 0 0;
         flex-shrink: 0;
     }
 
     .user-message .avatar {
         background: #2563eb;
         color: white;
+        margin: 0 0 0 1rem;
     }
 
     .ai-message .avatar {
         background: #8b5cf6;
         color: white;
         overflow: hidden;
+        margin: 0 1rem 0 0;
     }
 
     .avatar-image {
@@ -132,7 +135,7 @@
     }
 
     .message-bubble {
-        padding: 1.25rem 1.75rem;
+        padding: var(--spacing-message-bubble);
         border-radius: 1.5rem;
         font-size: 3rem;
         line-height: 1.2;
