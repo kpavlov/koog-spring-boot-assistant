@@ -126,7 +126,7 @@
             <url>https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public</url>
             <releases>
                 <!-- enable for nightly koog -->
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
