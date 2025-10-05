@@ -59,6 +59,14 @@ class ElvenAgent(
     private val moderationErrorResponse =
         javaClass.getResource("/agents/elven-assistant/moderation-error.md")!!.readText()
 
+    private val greetings =
+        arrayOf(
+            "Ah, well met! Shall I guide your steps through the realms of light?",
+            "Greetings, friend of the woods. May I show you the hidden wonders?",
+            "Hail! Shall the stars themselves illuminate your path today?",
+            "Ah, a bright hello to you, traveler! How may I illuminate your path through elven wonders today?",
+        )
+
     @Value("\${ai.koog.agents.tracing}")
     private var enableTracing: Boolean = false
 
@@ -110,8 +118,7 @@ class ElvenAgent(
         chatSessionId: ChatSessionId,
     ): String {
         if (input == "[START]" || input == "[GREETING]") {
-            return """Ah, a bright hello to you, traveler! How may I illuminate your path through elven wonders today?
-                """.trimMargin()
+            return greetings.random()
         } else if (input == "[CONTINUE]") {
             return "" // do nothing
         }

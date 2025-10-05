@@ -1,30 +1,38 @@
-# Koog Spring-Boot Assistant Demo
+# Koog Spring-Boot Elven Assistant
 
 [![Java CI with Maven](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/maven.yml)
 [![Node.js CI](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/kpavlov/koog-spring-boot-assistant/actions/workflows/node.js.yml)
 
+[**WEB UI**](https://kpavlov.github.io/koog-spring-boot-assistant/)
+
 ## Overview
 
 An AI-powered conversational assistant demonstrating 
-the [Koog](https://github.com/jetbrains/koog) framework for building intelligent agents 
+the [JetBrains Koog](https://github.com/jetbrains/koog) framework for building intelligent agents 
 with Kotlin and Spring Boot. 
 The application features an Elven-themed chatbot that combines RAG (Retrieval-Augmented Generation), 
 session persistence, and real-time WebSocket communication.
 
 **Key Features:**
 - 🤖 **AI Agent Workflow**: Multi-node execution graph with input moderation, LLM processing, and conditional routing
-- 💬 **Interactive Chat UI**: Svelte-based web interface with real-time WebSocket messaging
+- 💬 [**Interactive Chat UI**]((https://kpavlov.github.io/koog-spring-boot-assistant/)): Svelte-based web interface with real-time WebSocket messaging
 - 📚 **RAG System**: Vector-based knowledge retrieval from markdown documents
 - 🛠️ **Custom Tools**: Extensible tool system (e.g., Elven marketplace, time conversion)
 - 🔍 **Observability**: Integrated OpenTelemetry tracing and metrics
 - 🧪 **Prompt Evaluation**: Promptfoo integration for testing and optimizing LLM prompts
 - 💾 **Session Management**: Persistent conversation state with checkpoint recovery
 
-**Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • Koog 0.5.0 • WebFlux • Svelte
+**Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • [JetBrains Koog](https://github.com/jetbrains/koog) • WebFlux • Svelte, OpenAPI
 
-![screenshot-1.png](docs/screenshot-1.png)
+<div style="max-height: 90vh; display: inline-flex">
+
+[![screenshot-1.png](docs/screenshot-1.png)](https://kpavlov.github.io/koog-spring-boot-assistant/)
+
+</div>
 
 ## Quickstart
+
+You may find the instructions also on [**WEB UI**](https://kpavlov.github.io/koog-spring-boot-assistant/)
 
 ### Prerequisites
 - Java 17+ (JDK). Using the same JDK as your IDE is recommended.
@@ -93,7 +101,8 @@ like API classes from OpenAPI, and `build-info.properties`:**
   make run
   ``` 
 
-- Starting Web UI
+- Open [Web UI](https://kpavlov.github.io/koog-spring-boot-assistant/).
+  To build and run it locally:
     ```shell
     cd chat-ui && npm run dev 
     ```

@@ -5,10 +5,10 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-#    branches: [ "main" ]
-#    paths:
-#      - 'chat-ui/**'
-#      - 'docs/**'
+    branches: [ "main" ]
+    paths:
+      - 'chat-ui/**'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
     paths:

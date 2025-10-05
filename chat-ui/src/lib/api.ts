@@ -43,6 +43,7 @@ export class WebSocketChatClient {
     private globalMessageHandlers: ((answer: Answer) => void)[] = [];
     private sessionId: string | null = null;
     private disconnectHandlers: (() => void)[] = [];
+    private sessionIdReceivedHandlers: ((sessionId: string) => void)[] = [];
     private chatSessionId: string | undefined = undefined;
 
     constructor(sessionId?: string | null) {
@@ -68,6 +69,17 @@ export class WebSocketChatClient {
         const index = this.disconnectHandlers.indexOf(handler);
         if (index > -1) {
             this.disconnectHandlers.splice(index, 1);
+        }
+    }
+
+    addSessionIdReceivedHandler(handler: (sessionId: string) => void) {
+        this.sessionIdReceivedHandlers.push(handler);
+    }
+
+    removeSessionIdReceivedHandler(handler: (sessionId: string) => void) {
+        const index = this.sessionIdReceivedHandlers.indexOf(handler);
+        if (index > -1) {
+            this.sessionIdReceivedHandlers.splice(index, 1);
         }
     }
 
@@ -114,7 +126,12 @@ export class WebSocketChatClient {
                         }
                         // Capture the server-assigned chatSessionId for subsequent requests
                         if (answer.chatSessionId) {
+                            const wasNewSession = !this.chatSessionId;
                             this.chatSessionId = answer.chatSessionId;
+                            // Notify handlers when session ID is received from server
+                            if (wasNewSession) {
+                                this.sessionIdReceivedHandlers.forEach(handler => handler(answer.chatSessionId));
+                            }
                         }
                         // Call temporary handlers (for sendMessage responses)
                         this.messageHandlers.forEach(handler => handler(answer));
