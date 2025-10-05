@@ -4,16 +4,16 @@
 name: Deploy to GitHub Pages
 
 on:
-#  push:
+  push:
 #    branches: [ "main" ]
 #    paths:
 #      - 'chat-ui/**'
 #      - 'docs/**'
-#  pull_request:
-#    branches: [ "main" ]
-#    paths:
-#      - 'chat-ui/**'
-#      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'chat-ui/**'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -52,20 +52,21 @@ jobs:
       run: npm run build
       env:
         BASE_URL: /koog-spring-boot-assistant/
-    - run: npm run check
     - name: Prepare deployment directory
       run: |
-        mkdir -p ../deploy
+        mkdir -p ../deploy ../deploy/docs
         cp -r dist/* ../deploy/
         cp -r ../docs/*.yaml ../deploy/docs/
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v4
       # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       with:
         path: 'deploy'
 
   deploy:
     # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
