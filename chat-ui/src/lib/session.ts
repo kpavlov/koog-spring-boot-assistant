@@ -22,8 +22,9 @@ function initializeSessionId(): string {
     return stored;
   }
 
+  // Generate a new session ID but DON'T store it yet
+  // It will be stored only when confirmed by the server
   const newId = generateSessionId();
-  storeSessionId(newId);
   return newId;
 }
 
