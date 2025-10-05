@@ -12,7 +12,6 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 
 class CreateMermaidDiagramTest {
@@ -62,22 +61,23 @@ class CreateMermaidDiagramTest {
 
         diagram shouldBe
             """
-            graph TD
-                __start__["__start__"]
-                __finish__["__finish__"]
-                moderate-input["moderate-input"]
-                CallLLM["CallLLM"]
-                ExecuteTool["ExecuteTool"]
-                SendToolResult["SendToolResult"]
-            
-                __start__ --> |"transformed"| moderate-input
-                moderate-input --> |"transformed"| CallLLM
-                moderate-input --> |"transformed"| __finish__
-                CallLLM --> |"transformed"| __finish__
-                CallLLM --> |"onCondition"| ExecuteTool
+            ---
+            title: test-strategy
+            ---
+            stateDiagram
+                state "moderate-input" as moderate_input
+                state "CallLLM" as CallLLM
+                state "ExecuteTool" as ExecuteTool
+                state "SendToolResult" as SendToolResult
+
+                [*] --> moderate_input : transformed
+                moderate_input --> CallLLM : transformed
+                moderate_input --> [*] : transformed
+                CallLLM --> [*] : transformed
+                CallLLM --> ExecuteTool : onCondition
                 ExecuteTool --> SendToolResult
-                SendToolResult --> |"transformed"| __finish__
-                SendToolResult --> |"onCondition"| ExecuteTool
+                SendToolResult --> [*] : transformed
+                SendToolResult --> ExecuteTool : onCondition
             """.trimIndent()
     }
 }

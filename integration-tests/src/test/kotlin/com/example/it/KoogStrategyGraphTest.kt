@@ -1,6 +1,7 @@
 package com.example.it
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -11,24 +12,12 @@ class KoogStrategyGraphTest : AbstractIntegrationTest() {
             val response = koogClient.mermaid()
 
             // language=mermaid
-            response shouldBe
+            response shouldContain
                 """
-                graph TD
-                    __start__["__start__"]
-                    __finish__["__finish__"]
-                    moderate-input["moderate-input"]
-                    CallLLM["CallLLM"]
-                    ExecuteTool["ExecuteTool"]
-                    SendToolResult["SendToolResult"]
-                
-                    __start__ --> |"transformed"| moderate-input
-                    moderate-input --> |"transformed"| CallLLM
-                    moderate-input --> |"transformed"| __finish__
-                    CallLLM --> |"transformed"| __finish__
-                    CallLLM --> |"onCondition"| ExecuteTool
-                    ExecuteTool --> SendToolResult
-                    SendToolResult --> |"transformed"| __finish__
-                    SendToolResult --> |"onCondition"| ExecuteTool
+                ---
+                title: test-strategy
+                ---
+                stateDiagram
                 """.trimIndent()
         }
 }
