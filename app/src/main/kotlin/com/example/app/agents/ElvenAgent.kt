@@ -4,6 +4,7 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.RollbackStrategy
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
+import ai.koog.agents.core.dsl.extension.ModeratedMessage
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.features.eventHandler.feature.handleEvents
@@ -19,6 +20,7 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.streaming.StreamFrame
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
@@ -55,6 +57,9 @@ class ElvenAgent(
     private val systemErrorResponse =
         javaClass.getResource("/agents/elven-assistant/system-error.md")!!.readText()
 
+    private val moderationErrorResponse =
+        javaClass.getResource("/agents/elven-assistant/moderation-error.md")!!.readText()
+
     private val greetings =
         arrayOf(
             "Ah, well met! Shall I guide your steps through the realms of light?",
@@ -75,20 +80,21 @@ class ElvenAgent(
         input: String,
         chatSessionId: ChatSessionId,
     ): Flow<String> {
-        if (input == "[START]" || input == "[GREETING]") {
+        if (input == "[START]") {
             return flowOf(greetings.random())
         } else if (input == "[CONTINUE]") {
             return flowOf("") // do nothing
         }
 
         return callbackFlow {
+            var agent: AIAgent<String, Any>? = null
+            var flowClosed = false
+
             try {
                 val relevantDocuments =
-                    runBlocking {
-                        rankedDocumentStorage
-                            .mostRelevantDocuments(input, count = 3)
-                            .toList()
-                    }
+                    rankedDocumentStorage
+                        .mostRelevantDocuments(input, count = 3)
+                        .toList()
 
                 val systemPrompt =
                     promptTemplateProvider.getPromptTemplate(
@@ -97,7 +103,7 @@ class ElvenAgent(
                         version = "latest",
                     )
 
-                val agent =
+                agent =
                     AIAgent(
                         id = chatSessionId,
                         promptExecutor = promptExecutor,
@@ -109,7 +115,7 @@ class ElvenAgent(
                                 maxAgentIterations = 100,
                             ),
                         strategy = strategy,
-                        toolRegistry = tools,
+                        toolRegistry = ToolRegistry.EMPTY, // tools, // TODO: fix serialization
                     ) {
                         install(Persistence) {
                             storage = persistenceStorageProvider
@@ -144,32 +150,61 @@ class ElvenAgent(
 
                             onToolValidationFailed {
                                 logger.warn("❌ Tool validation failed. tool=${it.tool} error=${it.error}")
-                                send(systemErrorResponse)
-                                close()
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
+                            }
+
+                            onNodeExecutionCompleted { context ->
+                                logger.debug("Node execution completed: $context")
+
+                                val moderatedMessage = context.output as? ModeratedMessage
+                                moderatedMessage?.let {
+                                    if (it.moderationResult.isHarmful) {
+                                        if (!flowClosed) {
+                                            flowClosed = true
+                                            trySend(moderationErrorResponse)
+                                            close()
+                                        }
+                                    }
+                                }
                             }
 
                             onNodeExecutionFailed {
                                 logger.warn("❌ Node execution failed: ${it.node}", it.throwable)
-                                send(systemErrorResponse)
-                                close()
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
                             }
 
                             onLLMStreamingFrameReceived { context ->
                                 (context.streamFrame as? StreamFrame.Append)?.let { frame ->
                                     logger.info("➡️ Received: \"${frame.text}\"")
-                                    send(frame.text)
+                                    if (!flowClosed) {
+                                        trySend(frame.text)
+                                    }
                                 }
                             }
 
                             onLLMStreamingFailed {
                                 logger.warn("❌ Error: ${it.error}")
-                                send(systemErrorResponse)
-                                close()
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
                             }
 
                             onLLMStreamingCompleted {
                                 logger.debug("✅ Streaming complete")
-                                close()
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    close()
+                                }
                             }
                         }
                     }
@@ -177,23 +212,24 @@ class ElvenAgent(
                 logger.trace("Running command: {}", input)
 
                 agent.run(input)
-                agent.close()
-
-                awaitClose {
-                    logger.debug("Flow cancelled for session: $chatSessionId, cleaning up resources")
-                    runBlocking {
-                        try {
-                            agent.close()
-                            logger.debug("Agent closed successfully for session: $chatSessionId")
-                        } catch (e: Exception) {
-                            logger.error("Error closing agent during cleanup for session: $chatSessionId", e)
-                        }
-                    }
-                }
             } catch (e: Exception) {
                 logger.error("❌ Error processing request", e)
-                trySend(systemErrorResponse)
-                close()
+                if (!flowClosed) {
+                    flowClosed = true
+                    trySend(systemErrorResponse)
+                    close()
+                }
+            }
+            awaitClose {
+                logger.debug("Flow cancelled for session: $chatSessionId, cleaning up resources")
+                runBlocking {
+                    try {
+                        agent?.close()
+                        logger.debug("Agent closed successfully for session: $chatSessionId")
+                    } catch (e: Exception) {
+                        logger.error("Error closing agent during cleanup for session: $chatSessionId", e)
+                    }
+                }
             }
         }
     }
@@ -203,7 +239,10 @@ class ElvenAgent(
         input: String,
         relevantDocuments: List<Path>,
     ): Prompt =
-        prompt("with-context") {
+        prompt(
+            "with-context",
+            params = LLMParams(temperature = 0.2),
+        ) {
             system(systemPrompt)
             user {
                 +"User's input: ```$input```."

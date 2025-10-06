@@ -15,9 +15,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class AgentConfiguration {
-    private val moderationErrorResponse =
-        javaClass.getResource("/agents/elven-assistant/moderation-error.md")!!.readText()
-
     @Bean
     fun streamingAgentStrategy() =
         strategy(
@@ -74,7 +71,7 @@ class AgentConfiguration {
             edge(
                 moderateInput forwardTo nodeFinish
                     onCondition { it.moderationResult.isHarmful }
-                    transformed { moderationErrorResponse },
+                    transformed { "" }, // handles on Agent level
             )
 
             edge(mapStringToRequests forwardTo applyRequestToSession)
