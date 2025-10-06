@@ -5,13 +5,15 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.random.Random.Default.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 
 class AiChatFailuresTest : AbstractIntegrationTest() {
-    @Test
-    fun `Should handle embedding request failure`(): Unit =
+    @ParameterizedTest
+    @ValueSource(ints = [400, 401, 403, 404, 418, 500, 503])
+    fun `Should handle embedding request failure`(errorStatusCode: Int): Unit =
         runTest {
             val seed = nextInt()
             val question = "RAG should fail, $seed?"
@@ -26,7 +28,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
             mockOpenai.embeddings {
                 stringInput(question)
             } respondsError {
-                httpStatus = HttpStatusCode.ServiceUnavailable
+                httpStatusCode = errorStatusCode
                 body = ""
                 delay = 42.milliseconds
             }
@@ -39,8 +41,9 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
             }
         }
 
-    @Test
-    fun `Should handle moderation request failure`(): Unit =
+    @ParameterizedTest
+    @ValueSource(ints = [400, 401, 403, 404, 418, 500, 503])
+    fun `Should handle moderation request failure`(errorStatusCode: Int): Unit =
         runTest {
             val seed = nextInt()
             val question = "Moderation should fail, $seed?"
@@ -56,7 +59,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 inputContains(question)
             } respondsError {
                 body = ""
-                httpStatus = HttpStatusCode.ServiceUnavailable
+                httpStatusCode = errorStatusCode
             }
 
             val response = chatClient.sendMessage(question, HttpStatusCode.OK)
@@ -67,8 +70,9 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
             }
         }
 
-    @Test
-    fun `Should handle LLM request failure`(): Unit =
+    @ParameterizedTest
+    @ValueSource(ints = [400, 401, 403, 404, 418, 500, 503])
+    fun `Should handle LLM request failure`(errorStatusCode: Int): Unit =
         runTest {
             val seed = nextInt()
             val question = "To be or not to be, $seed?"
@@ -91,7 +95,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 userMessageContains(question)
             } respondsError {
                 body = ""
-                httpStatus = HttpStatusCode.InternalServerError
+                httpStatusCode = errorStatusCode
             }
 
             val response = chatClient.sendMessage(question, HttpStatusCode.OK)

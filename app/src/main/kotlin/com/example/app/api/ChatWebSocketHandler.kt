@@ -22,10 +22,10 @@ class ChatWebSocketHandler(
     private val sessions = ConcurrentHashMap<String, WebSocketSession>()
 
     override fun handle(session: WebSocketSession): Mono<Void> {
-        // Extract session ID from X-Session-Id header during handshake
+        // Extract session ID from X-Session-ID header during handshake
         val sessionId =
             session.handshakeInfo.headers
-                .getFirst("X-Session-Id")
+                .getFirst(X_SESSION_ID_HEADER)
                 ?: randomSessionId()
 
         // Store session

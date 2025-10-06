@@ -15,7 +15,7 @@ import ai.koog.prompt.dsl.AttachmentBuilder
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.rag.base.RankedDocumentStorage
@@ -34,8 +34,7 @@ import kotlin.io.path.pathString
 
 @Service
 class ElvenAgent(
-    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-    private val promptExecutor: PromptExecutor,
+    private val promptExecutor: MultiLLMPromptExecutor,
     private val spanExporters: List<SpanExporter>,
     private val buildProps: BuildProperties,
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
@@ -48,9 +47,6 @@ class ElvenAgent(
 
     private val systemErrorResponse =
         javaClass.getResource("/agents/elven-assistant/system-error.md")!!.readText()
-
-    private val moderationErrorResponse =
-        javaClass.getResource("/agents/elven-assistant/moderation-error.md")!!.readText()
 
     private val greetings =
         arrayOf(
@@ -139,12 +135,6 @@ class ElvenAgent(
             systemErrorResponse
         }
     }
-
-    /**
-     * Exposes the strategy for diagram generation purposes.
-     * This allows external components to inspect the strategy structure.
-     */
-    fun getStrategy() = strategy
 
     private fun createPrompt(
         systemPrompt: String,
