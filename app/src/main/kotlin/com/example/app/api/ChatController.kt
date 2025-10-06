@@ -4,6 +4,7 @@ import com.example.app.Generators.randomSessionId
 import com.example.app.agents.ElvenAgent
 import com.example.app.api.model.Answer
 import com.example.app.api.model.ChatRequest
+import kotlinx.coroutines.flow.toList
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
@@ -26,10 +27,12 @@ class ChatController(
 
         // run the agent
         val reply =
-            agent.giveAdvice(
-                chatSessionId = sessionId,
-                input = chatRequest.message,
-            )
+            agent
+                .giveAdvice(
+                    chatSessionId = sessionId,
+                    input = chatRequest.message,
+                ).toList()
+                .joinToString(separator = "")
 
         val headers = HttpHeaders()
         headers.set(X_SESSION_ID_HEADER, sessionId)
@@ -41,6 +44,8 @@ class ChatController(
                 Answer(
                     message = reply,
                     chatSessionId = sessionId,
+                    completed = true,
+                    chatRequestId = chatRequest.chatRequestId,
                 ),
             )
     }

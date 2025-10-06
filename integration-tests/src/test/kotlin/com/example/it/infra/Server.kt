@@ -20,6 +20,7 @@ object Server {
                 .run(
                     com.example.app.Application::class.java,
                     "--server.port=0",
+                    "--spring.profiles.active=test",
                 )
     }
 

@@ -33,7 +33,7 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 delay = 42.milliseconds
             }
 
-            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
+            val response = chatClient.sendMessage(message = question, expectedStatusCode = HttpStatusCode.OK)
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
@@ -62,7 +62,11 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 httpStatusCode = errorStatusCode
             }
 
-            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
+            val response =
+                chatClient.sendMessage(
+                    message = question,
+                    expectedStatusCode = HttpStatusCode.OK,
+                )
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer
@@ -98,7 +102,11 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 httpStatusCode = errorStatusCode
             }
 
-            val response = chatClient.sendMessage(question, HttpStatusCode.OK)
+            val response =
+                chatClient.sendMessage(
+                    message = question,
+                    expectedStatusCode = HttpStatusCode.OK,
+                )
 
             response shouldNotBeNull {
                 message shouldBe expectedAnswer

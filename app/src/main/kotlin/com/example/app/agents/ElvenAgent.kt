@@ -6,6 +6,7 @@ import ai.koog.agents.core.agent.context.RollbackStrategy
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
+import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.agents.features.opentelemetry.feature.OpenTelemetry
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageLogWriter
@@ -18,12 +19,19 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.streaming.StreamFrame
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
 import com.example.app.ChatSessionId
 import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
@@ -42,7 +50,7 @@ class ElvenAgent(
     private val promptTemplateProvider: PromptTemplateProvider,
     private val strategy: AIAgentGraphStrategy<String, String>,
 ) {
-    private val log = LoggerFactory.getLogger(ElvenAgent::class.java)
+    private val logger = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
 
     private val systemErrorResponse =
@@ -64,21 +72,23 @@ class ElvenAgent(
             tools(AssistantTools())
         }
 
-    suspend fun giveAdvice(
+    fun giveAdvice(
         input: String,
         chatSessionId: ChatSessionId,
-    ): String {
+    ): Flow<String> {
         if (input == "[START]" || input == "[GREETING]") {
-            return greetings.random()
+            return flowOf(greetings.random())
         } else if (input == "[CONTINUE]") {
-            return "" // do nothing
+            return flowOf("") // do nothing
         }
 
         return try {
             val relevantDocuments =
-                rankedDocumentStorage
-                    .mostRelevantDocuments(input, count = 3)
-                    .toList()
+                runBlocking {
+                    rankedDocumentStorage
+                        .mostRelevantDocuments(input, count = 3)
+                        .toList()
+                }
 
             val systemPrompt =
                 promptTemplateProvider.getPromptTemplate(
@@ -126,13 +136,39 @@ class ElvenAgent(
                             addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
                         }
                     }
+
+                    handleEvents {
+                        onLLMStreamingFrameReceived { context ->
+                            (context.streamFrame as? StreamFrame.Append)?.let { frame ->
+                                logger.info("➡️ Received: \"${frame.text}\"")
+                                print(frame.text)
+                            }
+                        }
+                        onLLMStreamingFailed {
+                            logger.warn("❌ Error: ${it.error}")
+                        }
+                        onLLMStreamingCompleted {
+                            logger.debug("✅ Streaming complete")
+                        }
+                    }
                 }
 
-            log.trace("Running command: {}", input)
-            agent.run(input)
+            logger.trace("Running command: {}", input)
+            val tokens =
+                runBlocking {
+                    agent
+                        .run(input)
+                        .splitToSequence(" ")
+                        .map { "$it " }
+                }
+            return tokens
+                .asFlow()
+                .onEach {
+                    delay(100) // simulate delay
+                }
         } catch (e: Exception) {
-            log.error("Error processing request", e)
-            systemErrorResponse
+            logger.error("Error processing request", e)
+            flowOf(systemErrorResponse)
         }
     }
 

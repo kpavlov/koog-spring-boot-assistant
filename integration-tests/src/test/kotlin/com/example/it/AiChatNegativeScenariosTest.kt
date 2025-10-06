@@ -33,7 +33,7 @@ class AiChatNegativeScenariosTest : AbstractIntegrationTest() {
             val response = chatClient.sendMessage(question)
 
             response shouldNotBeNull {
-                message shouldBe expectedAnswer
+                message.trim() shouldBe expectedAnswer
                 chatSessionId shouldNotBe null
             }
         }

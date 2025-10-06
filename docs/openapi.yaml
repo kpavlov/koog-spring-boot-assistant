@@ -114,26 +114,35 @@ components:
                 $ref: '#/components/schemas/ChatSessionId'
     schemas:
         ChatSessionId:
-            description: Session identifier  for the conversation
+            description: Chat Session identifier  for the conversation
             type: string
-            pattern: '^[0-9a-f-]{12,64}$'
+            pattern: '^[_0-9a-f-]{16,64}$'
             example: "550e8400-e29b-41d4-a716-446655440000"
+        ChatRequestId:
+            description: Chat Request identifier\
+            type: string
         ChatRequest:
             type: object
             required:
                 - message
             properties:
+                chatRequestId:
+                    $ref: '#/components/schemas/ChatRequestId'
+                chatSessionId:
+                    $ref: '#/components/schemas/ChatSessionId'
                 message:
                     type: string
                     description: The message to send to the AI agent
                     example: "How do I implement a REST API in Spring Boot?"
-                chatSessionId:
-                    $ref: '#/components/schemas/ChatSessionId'
+                streaming:
+                    type: boolean
+                    default: false
         Answer:
             type: object
             required:
                 - message
                 - chatSessionId
+                - completed
             properties:
                 message:
                     type: string
@@ -141,3 +150,8 @@ components:
                     example: "To implement a REST API in Spring Boot, you can use @RestController..."
                 chatSessionId:
                     $ref: '#/components/schemas/ChatSessionId'
+                chatRequestId:
+                    $ref: '#/components/schemas/ChatRequestId'
+                completed:
+                    type: boolean
+                    description: Is response complete

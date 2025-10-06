@@ -18,7 +18,7 @@ class WebSocketConfig(
 
         // Configure CORS for WebSocket
         val corsConfiguration = CorsConfiguration()
-        corsConfiguration.allowedOrigins = listOf("*", "http://localhost:3000")
+        corsConfiguration.allowedOrigins = listOf("*", "https://kpavlov.github.io/", "http://localhost:3000")
         corsConfiguration.allowedMethods = listOf("*")
         corsConfiguration.allowedHeaders = listOf("*")
         corsConfiguration.allowCredentials = false

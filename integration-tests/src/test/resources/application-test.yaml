@@ -11,6 +11,7 @@ logging:
         "ai.koog": debug
         # "ai.koog.agents.core.agent.GraphAIAgent": off
         "com.example.app": trace
+    register-shutdown-hook: true
 
 management:
     otlp:
@@ -23,3 +24,9 @@ management:
 spring:
     lifecycle:
         timeout-per-shutdown-phase: 0s  # Disable graceful shutdown in tests
+    reactor:
+        netty:
+            shutdown-quiet-period: 0s  # Disable Netty graceful shutdown
+            shutdown-timeout: 1s       # Minimal Netty shutdown timeout
+server:
+    shutdown: immediate  # Use immediate shutdown instead of graceful

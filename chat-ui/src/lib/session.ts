@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 const SESSION_ID_KEY = 'chat_session_id';
 
 function generateSessionId(): string {
-  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  return `CHAT_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 }
 
 function getStoredSessionId(): string | null {

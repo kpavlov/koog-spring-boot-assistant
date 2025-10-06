@@ -1,12 +1,13 @@
 <script lang="ts">
     import {afterUpdate, onDestroy, onMount} from 'svelte';
-    import {Loader2, User, HelpCircle, ChevronDown} from 'lucide-svelte';
+    import {ChevronDown, HelpCircle, Loader2} from 'lucide-svelte';
     import {ApiError, getApiVersion, getStrategyGraph, WebSocketChatClient} from './lib/api';
     import {sessionId} from './lib/session';
     import {marked} from 'marked';
     import DiagramViewer from './components/DiagramViewer.svelte';
     import ThemeToggle from './components/ThemeToggle.svelte';
     import ModeToggle from './components/ModeToggle.svelte';
+    import ChatMessageView from './components/ChatMessageView.svelte';
     import type {Message} from './components/ChatMessages.svelte';
 
     // Get base URL for asset paths
@@ -55,6 +56,16 @@
         return marked.parse(text) as string;
     }
 
+    // Helper function to dismiss offline toast and reset counter
+    function dismissOfflineToast() {
+        showOfflineToast = false;
+        toastDismissCount = 0;
+        if (offlineToastTimer) {
+            clearTimeout(offlineToastTimer);
+            offlineToastTimer = null;
+        }
+    }
+
     // Check server health and reconnect WebSocket if needed
     async function checkServerHealth() {
         const wasOffline = !isServerOnline;
@@ -68,12 +79,7 @@
                 serverVersion = version;
                 // Dismiss toast and reset counter when server comes online
                 if (wasOffline) {
-                    showOfflineToast = false;
-                    toastDismissCount = 0;
-                    if (offlineToastTimer) {
-                        clearTimeout(offlineToastTimer);
-                        offlineToastTimer = null;
-                    }
+                    dismissOfflineToast();
                 }
             } catch (error) {
                 // WebSocket is connected but version call failed
@@ -82,12 +88,7 @@
                 console.warn('Version endpoint failed but WebSocket is connected:', error);
                 // Dismiss toast and reset counter when server comes online
                 if (wasOffline) {
-                    showOfflineToast = false;
-                    toastDismissCount = 0;
-                    if (offlineToastTimer) {
-                        clearTimeout(offlineToastTimer);
-                        offlineToastTimer = null;
-                    }
+                    dismissOfflineToast();
                 }
             }
         } else {
@@ -105,12 +106,7 @@
                         serverVersion = version;
                         // Dismiss toast and reset counter when server comes online
                         if (wasOffline) {
-                            showOfflineToast = false;
-                            toastDismissCount = 0;
-                            if (offlineToastTimer) {
-                                clearTimeout(offlineToastTimer);
-                                offlineToastTimer = null;
-                            }
+                            dismissOfflineToast();
                         }
                     } catch (error) {
                         // WebSocket connected but version failed
@@ -118,12 +114,7 @@
                         console.warn('Version endpoint failed but WebSocket is connected:', error);
                         // Dismiss toast and reset counter when server comes online
                         if (wasOffline) {
-                            showOfflineToast = false;
-                            toastDismissCount = 0;
-                            if (offlineToastTimer) {
-                                clearTimeout(offlineToastTimer);
-                                offlineToastTimer = null;
-                            }
+                            dismissOfflineToast();
                         }
                     }
                 }
@@ -218,12 +209,7 @@
             isServerOnline = true;
 
             // Dismiss toast and reset counter when server comes online
-            showOfflineToast = false;
-            toastDismissCount = 0;
-            if (offlineToastTimer) {
-                clearTimeout(offlineToastTimer);
-                offlineToastTimer = null;
-            }
+            dismissOfflineToast();
 
             // Refresh server version
             try {
@@ -281,7 +267,8 @@
             id: Date.now().toString(),
             text: currentMessage.trim(),
             isUser: true,
-            timestamp: new Date()
+            timestamp: new Date(),
+            completed: true,
         };
 
         // Create immediate loading response bubble
@@ -290,7 +277,8 @@
             id: loadingMessageId,
             text: '', // Empty text - will be shown as loading dots
             isUser: false,
-            timestamp: new Date()
+            timestamp: new Date(),
+            completed: false,
         };
 
         messages = [...messages, userMessage, loadingMessage];
@@ -304,16 +292,22 @@
         }, 30000);
 
         try {
-            const response = await wsClient.sendMessage(messageText);
+            const response = await wsClient.sendMessage(messageText, (answer) => {
+                // Update the message with each streaming response
+                messages = messages.map(msg =>
+                    msg.id === loadingMessageId
+                        ? {
+                            ...msg,
+                            text: answer.message,
+                            timestamp: new Date(),
+                            requestId: answer.chatRequestId,
+                            completed: answer.completed
+                        }
+                        : msg
+                );
+            });
 
             clearTimeout(timeout);
-
-            // Update the loading message with the actual response
-            messages = messages.map(msg =>
-                msg.id === loadingMessageId
-                    ? {...msg, text: response.message, timestamp: new Date()}
-                    : msg
-            );
 
             isLoading = false;
 
@@ -495,7 +489,7 @@
             if (reconnectTimeout) {
                 clearTimeout(reconnectTimeout);
             }
-                if (offlineToastTimer) {
+            if (offlineToastTimer) {
                 clearTimeout(offlineToastTimer);
             }
             if (wsClient) {
@@ -527,8 +521,8 @@
                 <span>Elven Assistant</span>
             </div>
             <div class="header-right">
-                <ThemeToggle />
-                <ModeToggle />
+                <ThemeToggle/>
+                <ModeToggle/>
                 <div class="help-menu-container">
                     <button class="help-button" on:click={toggleHelpMenu} title="Help">
                         <HelpCircle size={20}/>
@@ -576,37 +570,7 @@
     <!-- Chat Messages -->
     <div class="chat-container" bind:this={chatContainer}>
         {#each messages as message (message.id)}
-            <div class="message-wrapper {message.isUser ? 'user-message' : 'ai-message'}">
-                <div class="avatar">
-                    {#if message.isUser}
-                        <User size={24}/>
-                    {:else}
-                        <img src="{baseUrl}elf.png" alt="Elven Assistant" class="avatar-image"/>
-                    {/if}
-                </div>
-                <div class="message-content">
-                    <div class="message-bubble">
-                        {#if message.text}
-                            <div class="markdown-content">
-                                {@html renderMarkdown(message.text)}
-                            </div>
-                        {:else if !message.isUser}
-                            <div class="loading-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        {:else}
-                            <div class="markdown-content">
-                                {@html renderMarkdown(message.text)}
-                            </div>
-                        {/if}
-                    </div>
-                    <div class="message-time">
-                        {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-                    </div>
-                </div>
-            </div>
+            <ChatMessageView {message} {baseUrl} {renderMarkdown}/>
         {/each}
     </div>
 
@@ -660,10 +624,14 @@
                     <div class="toast-icon">🧙‍♂️</div>
                     <div class="toast-message">
                         <div class="toast-title">The ancient servers slumber...</div>
-                        <div class="toast-subtitle">It seems the Spring-Boot realm is not yet awakened. Shall I guide thee through the ritual of summoning?</div>
+                        <div class="toast-subtitle">It seems the Spring-Boot realm is not yet awakened. Shall I guide
+                            thee through the ritual of summoning?
+                        </div>
                     </div>
                 </div>
-                <button class="toast-dismiss" on:click={(e) => { e.stopPropagation(); dismissToast(); }} title="Dismiss">✕</button>
+                <button class="toast-dismiss" on:click={(e) => { e.stopPropagation(); dismissToast(); }}
+                        title="Dismiss">✕
+                </button>
             </div>
         </div>
     {/if}
@@ -1099,223 +1067,6 @@
         height: 100%;
     }
 
-    /* Messages */
-    .message-wrapper {
-        display: flex;
-        margin-bottom: 2rem;
-        max-width: 80%;
-        align-items: flex-end;
-    }
-
-    .message-wrapper.user-message {
-        margin-left: auto;
-        flex-direction: row-reverse;
-    }
-
-    .message-wrapper.ai-message {
-        margin-right: auto;
-    }
-
-    .avatar {
-        width: var(--size-avatar);
-        height: var(--size-avatar);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 1rem 0 0;
-        flex-shrink: 0;
-    }
-
-    .user-message .avatar {
-        background: var(--color-user-bubble);
-        color: white;
-        margin: 0 0 0 1rem;
-    }
-
-    .ai-message .avatar {
-        background: var(--color-accent);
-        color: white;
-        overflow: hidden;
-        margin: 0 1rem 0 0;
-    }
-
-    .avatar-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .message-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .message-bubble {
-        padding: var(--spacing-message-bubble);
-        border-radius: 1.5rem;
-        font-size: var(--fs-message-bubble);
-        line-height: 1.2;
-        word-wrap: break-word;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-        max-width: 100%;
-        font-family: var(--font-serif);
-    }
-
-    .user-message .message-bubble {
-        background: var(--color-user-bubble);
-        color: white;
-        border-bottom-right-radius: 0.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .ai-message .message-bubble {
-        background: var(--color-ai-bubble-bg);
-        color: var(--color-ai-bubble-text);
-        border: 1px solid var(--color-border);
-        border-bottom-left-radius: 0.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .message-bubble p {
-        margin: 0;
-    }
-
-    .markdown-content {
-        width: 100%;
-    }
-
-    .markdown-content p {
-        margin: 0 0 1rem 0;
-    }
-
-    .markdown-content p:last-child {
-        margin-bottom: 0;
-    }
-
-    .markdown-content h1,
-    .markdown-content h2,
-    .markdown-content h3,
-    .markdown-content h4,
-    .markdown-content h5,
-    .markdown-content h6 {
-        margin: 1.5rem 0 1rem 0;
-        font-weight: 600;
-    }
-
-    .markdown-content h1:first-child,
-    .markdown-content h2:first-child,
-    .markdown-content h3:first-child {
-        margin-top: 0;
-    }
-
-    .markdown-content code {
-        background: var(--color-code-bg);
-        padding: 0.2em 0.4em;
-        border-radius: 0.3rem;
-        font-family: var(--font-mono);
-        font-size: 0.9em;
-    }
-
-    .ai-message .markdown-content code {
-        background: var(--color-code-bg);
-        color: var(--color-code-text);
-    }
-
-    .user-message .markdown-content code {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-
-    .markdown-content pre {
-        background: var(--color-code-bg);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
-        margin: 1rem 0;
-    }
-
-    .markdown-content pre code {
-        background: none;
-        padding: 0;
-    }
-
-    .markdown-content ul,
-    .markdown-content ol {
-        margin: 1rem 0;
-        padding-left: 2rem;
-    }
-
-    .markdown-content li {
-        margin: 0.5rem 0;
-    }
-
-    .markdown-content blockquote {
-        border-left: 4px solid rgba(0, 0, 0, 0.2);
-        padding-left: 1rem;
-        margin: 1rem 0;
-        font-style: italic;
-    }
-
-    .markdown-content a {
-        color: inherit;
-        text-decoration: underline;
-    }
-
-    .markdown-content strong {
-        font-weight: 700;
-    }
-
-    .markdown-content em {
-        font-style: italic;
-    }
-
-    .loading-dots {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        height: 1.6em;
-    }
-
-    .loading-dots span {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: var(--color-text-secondary);
-        animation: dot-bounce 1.4s infinite ease-in-out both;
-    }
-
-    .loading-dots span:nth-child(1) {
-        animation-delay: -0.32s;
-    }
-
-    .loading-dots span:nth-child(2) {
-        animation-delay: -0.16s;
-    }
-
-    @keyframes dot-bounce {
-        0%, 80%, 100% {
-            transform: scale(0);
-        }
-        40% {
-            transform: scale(1);
-        }
-    }
-
-    .message-time {
-        display: none; /* hide it temporary */
-        font-size: 1.5rem;
-        color: var(--color-text-secondary);
-        margin-top: 0.5rem;
-        padding: 0 0.5rem;
-    }
-
-    .user-message .message-time {
-        text-align: right;
-    }
 
     /* Input Container */
     .input-container {

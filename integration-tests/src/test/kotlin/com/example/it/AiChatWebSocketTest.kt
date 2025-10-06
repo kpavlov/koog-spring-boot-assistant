@@ -1,9 +1,9 @@
 package com.example.it
 
 import com.example.it.infra.WebSocketChatClient
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,16 +15,14 @@ class AiChatWebSocketTest : AbstractIntegrationTest() {
     private val wsClient: WebSocketChatClient = WebSocketChatClient(port = server.port)
 
     @BeforeEach
-    fun openWebSocket() =
-        runBlocking {
-            wsClient.connect()
-        }
+    fun openWebSocket() {
+        wsClient.connect()
+    }
 
     @AfterEach
-    fun closeWebSocket() =
-        runBlocking {
-            wsClient.close()
-        }
+    fun closeWebSocket() {
+        wsClient.close()
+    }
 
     @Test
     fun `Should answer a Question via WebSocket`(): Unit =
@@ -52,10 +50,15 @@ class AiChatWebSocketTest : AbstractIntegrationTest() {
                 assistantContent = expectedAnswer
             }
 
-            val response = wsClient.sendMessage(question)
+            val responseFlow = wsClient.sendMessageStreaming(question)
 
-            response shouldNotBeNull {
-                message shouldBe expectedAnswer
-            }
+            val responseString =
+                responseFlow
+                    .map { it.message }
+                    .toList()
+                    .joinToString(separator = "")
+                    .trim()
+
+            responseString shouldBe expectedAnswer
         }
 }
