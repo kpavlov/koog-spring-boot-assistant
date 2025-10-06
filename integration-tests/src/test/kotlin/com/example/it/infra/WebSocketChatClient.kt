@@ -44,7 +44,7 @@ class WebSocketChatClient(
         val headers =
             org.springframework.http.HttpHeaders().apply {
                 sessionId?.let {
-                    add("X-Session-Id", it)
+                    add("X-Session-ID", it)
                 }
             }
 

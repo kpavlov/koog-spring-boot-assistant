@@ -7,6 +7,6 @@ config:
       x-model: '{{model}}' # A way to control offline test execution. Disable on prod
   body:
       message: '{{query}}'
-      sessionId: '{{sessionId}}'
+      chatSessionId: '{{sessionId}}'
 
   transformResponse: 'json.message'

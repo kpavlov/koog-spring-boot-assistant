@@ -11,7 +11,7 @@ info:
         **Endpoint:** `ws://localhost:8080/ws/chat`
 
         **Headers:**
-        - `X-Session-Id` (optional): Session identifier for maintaining conversation context. If not provided, a new session will be created.
+        - `X-Session-ID` (optional): Session identifier for maintaining conversation context. If not provided, a new session will be created.
 
         **Message Format:**
         - **Send (Client → Server):** JSON matching the `ChatRequest` schema (without sessionId field)
@@ -21,7 +21,7 @@ info:
         ```javascript
         const ws = new WebSocket('ws://localhost:8080/ws/chat', {
           headers: {
-            'X-Session-Id': '550e8400-e29b-41d4-a716-446655440000'  // Optional
+            'X-Session-ID': '550e8400-e29b-41d4-a716-446655440000'  // Optional
           }
         });
 
@@ -37,7 +37,7 @@ info:
         };
         ```
 
-        **Note:** Session ID is managed via the `X-Session-Id` header during the WebSocket handshake, not in the message payload.
+        **Note:** Session ID is managed via the `X-Session-ID` header during the WebSocket handshake, not in the message payload.
     version: 1.0.0
 servers:
     -   url: http://localhost:8080
@@ -77,7 +77,7 @@ paths:
                 '200':
                     description: Chat response
                     headers:
-                        X-Session-Id:
+                        X-Session-ID:
                             $ref: '#/components/headers/SessionIdHeader'
                     content:
                         application/json:
@@ -101,7 +101,7 @@ paths:
 components:
     parameters:
         SessionIdParam:
-            name: X-Session-Id
+            name: X-Session-ID
             in: header
             description: Optional session identifier for maintaining conversation context. If not provided, a new session will be created.
             required: false
