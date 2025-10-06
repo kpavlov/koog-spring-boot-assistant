@@ -98,6 +98,7 @@
                             <modelPackage>com.example.it.client.model</modelPackage>
                             <generateSupportingFiles>false</generateSupportingFiles>
                             <generateApis>false</generateApis>
+                            <generateModelTests>false</generateModelTests>
                             <configOptions>
                                 <documentationProvider>none</documentationProvider>
                                 <skipDefaultInterface>true</skipDefaultInterface>
