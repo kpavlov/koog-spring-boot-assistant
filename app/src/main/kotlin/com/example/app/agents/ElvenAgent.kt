@@ -4,6 +4,7 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.RollbackStrategy
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
+import ai.koog.agents.core.dsl.extension.ModeratedMessage
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.features.eventHandler.feature.handleEvents
@@ -19,6 +20,7 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.streaming.StreamFrame
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
@@ -26,11 +28,10 @@ import com.example.app.ChatSessionId
 import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -48,13 +49,16 @@ class ElvenAgent(
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
     private val persistenceStorageProvider: PersistenceStorageProvider,
     private val promptTemplateProvider: PromptTemplateProvider,
-    private val strategy: AIAgentGraphStrategy<String, String>,
+    private val strategy: AIAgentGraphStrategy<String, Any>,
 ) {
     private val logger = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
 
     private val systemErrorResponse =
         javaClass.getResource("/agents/elven-assistant/system-error.md")!!.readText()
+
+    private val moderationErrorResponse =
+        javaClass.getResource("/agents/elven-assistant/moderation-error.md")!!.readText()
 
     private val greetings =
         arrayOf(
@@ -76,99 +80,157 @@ class ElvenAgent(
         input: String,
         chatSessionId: ChatSessionId,
     ): Flow<String> {
-        if (input == "[START]" || input == "[GREETING]") {
+        if (input == "[START]") {
             return flowOf(greetings.random())
         } else if (input == "[CONTINUE]") {
             return flowOf("") // do nothing
         }
 
-        return try {
-            val relevantDocuments =
-                runBlocking {
+        return callbackFlow {
+            var agent: AIAgent<String, Any>? = null
+            var flowClosed = false
+
+            try {
+                val relevantDocuments =
                     rankedDocumentStorage
                         .mostRelevantDocuments(input, count = 3)
                         .toList()
-                }
 
-            val systemPrompt =
-                promptTemplateProvider.getPromptTemplate(
-                    group = "elven-assistant",
-                    id = "system",
-                    version = "latest",
-                )
+                val systemPrompt =
+                    promptTemplateProvider.getPromptTemplate(
+                        group = "elven-assistant",
+                        id = "system",
+                        version = "latest",
+                    )
 
-            val agent =
-                AIAgent(
-                    id = chatSessionId,
-                    promptExecutor = promptExecutor,
-                    agentConfig =
-                        AIAgentConfig(
-                            prompt =
-                                createPrompt(systemPrompt, input, relevantDocuments),
-                            model = OpenAIModels.CostOptimized.GPT4_1Mini,
-                            maxAgentIterations = 100,
-                        ),
-                    strategy = strategy,
-                    toolRegistry = tools,
-                ) {
-                    install(Persistence) {
-                        storage = persistenceStorageProvider
+                agent =
+                    AIAgent(
+                        id = chatSessionId,
+                        promptExecutor = promptExecutor,
+                        agentConfig =
+                            AIAgentConfig(
+                                prompt =
+                                    createPrompt(systemPrompt, input, relevantDocuments),
+                                model = OpenAIModels.CostOptimized.GPT4_1Mini,
+                                maxAgentIterations = 100,
+                            ),
+                        strategy = strategy,
+                        toolRegistry = ToolRegistry.EMPTY, // tools, // TODO: fix serialization
+                    ) {
+                        install(Persistence) {
+                            storage = persistenceStorageProvider
 
-                        // Enable automatic checkpoint creation
-                        this.enableAutomaticPersistence = true
+                            // Enable automatic checkpoint creation
+                            this.enableAutomaticPersistence = true
 
-                        // We preserve message history on restore
-                        this.rollbackStrategy = RollbackStrategy.MessageHistoryOnly
-                    }
-
-                    install(OpenTelemetry) {
-                        setServiceInfo(serviceName = buildProps.name, serviceVersion = buildProps.version)
-                        // Configuration options here
-                        setVerbose(true)
-                        spanExporters.forEach {
-                            addSpanExporter(it)
+                            // We preserve message history on restore
+                            this.rollbackStrategy = RollbackStrategy.MessageHistoryOnly
                         }
-                    }
 
-                    if (enableTracing) {
-                        install(Tracing) {
-                            // Configure message processors to handle trace events
-                            addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
-                        }
-                    }
-
-                    handleEvents {
-                        onLLMStreamingFrameReceived { context ->
-                            (context.streamFrame as? StreamFrame.Append)?.let { frame ->
-                                logger.info("➡️ Received: \"${frame.text}\"")
-                                print(frame.text)
+                        install(OpenTelemetry) {
+                            setServiceInfo(serviceName = buildProps.name, serviceVersion = buildProps.version)
+                            // Configuration options here
+                            setVerbose(true)
+                            spanExporters.forEach {
+                                addSpanExporter(it)
                             }
                         }
-                        onLLMStreamingFailed {
-                            logger.warn("❌ Error: ${it.error}")
+
+                        if (enableTracing) {
+                            install(Tracing) {
+                                // Configure message processors to handle trace events
+                                addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
+                            }
                         }
-                        onLLMStreamingCompleted {
-                            logger.debug("✅ Streaming complete")
+
+                        handleEvents {
+                            onToolCallStarting { context ->
+                                logger.info("\n🔧 Using ${context.tool.name} with ${context.toolArgs}... ")
+                            }
+
+                            onToolValidationFailed {
+                                logger.warn("❌ Tool validation failed. tool=${it.tool} error=${it.error}")
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
+                            }
+
+                            onNodeExecutionCompleted { context ->
+                                logger.debug("Node execution completed: $context")
+
+                                val moderatedMessage = context.output as? ModeratedMessage
+                                moderatedMessage?.let {
+                                    if (it.moderationResult.isHarmful) {
+                                        if (!flowClosed) {
+                                            flowClosed = true
+                                            trySend(moderationErrorResponse)
+                                            close()
+                                        }
+                                    }
+                                }
+                            }
+
+                            onNodeExecutionFailed {
+                                logger.warn("❌ Node execution failed: ${it.node}", it.throwable)
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
+                            }
+
+                            onLLMStreamingFrameReceived { context ->
+                                (context.streamFrame as? StreamFrame.Append)?.let { frame ->
+                                    logger.info("➡️ Received: \"${frame.text}\"")
+                                    if (!flowClosed) {
+                                        trySend(frame.text)
+                                    }
+                                }
+                            }
+
+                            onLLMStreamingFailed {
+                                logger.warn("❌ Error: ${it.error}")
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    trySend(systemErrorResponse)
+                                    close()
+                                }
+                            }
+
+                            onLLMStreamingCompleted {
+                                logger.debug("✅ Streaming complete")
+                                if (!flowClosed) {
+                                    flowClosed = true
+                                    close()
+                                }
+                            }
                         }
                     }
-                }
 
-            logger.trace("Running command: {}", input)
-            val tokens =
+                logger.trace("Running command: {}", input)
+
+                agent.run(input)
+            } catch (e: Exception) {
+                logger.error("❌ Error processing request", e)
+                if (!flowClosed) {
+                    flowClosed = true
+                    trySend(systemErrorResponse)
+                    close()
+                }
+            }
+            awaitClose {
+                logger.debug("Flow cancelled for session: $chatSessionId, cleaning up resources")
                 runBlocking {
-                    agent
-                        .run(input)
-                        .splitToSequence(" ")
-                        .map { "$it " }
+                    try {
+                        agent?.close()
+                        logger.debug("Agent closed successfully for session: $chatSessionId")
+                    } catch (e: Exception) {
+                        logger.error("Error closing agent during cleanup for session: $chatSessionId", e)
+                    }
                 }
-            return tokens
-                .asFlow()
-                .onEach {
-                    delay(100) // simulate delay
-                }
-        } catch (e: Exception) {
-            logger.error("Error processing request", e)
-            flowOf(systemErrorResponse)
+            }
         }
     }
 
@@ -177,7 +239,10 @@ class ElvenAgent(
         input: String,
         relevantDocuments: List<Path>,
     ): Prompt =
-        prompt("with-context") {
+        prompt(
+            "with-context",
+            params = LLMParams(temperature = 0.2),
+        ) {
             system(systemPrompt)
             user {
                 +"User's input: ```$input```."

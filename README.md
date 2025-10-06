@@ -24,9 +24,15 @@ session persistence, and real-time WebSocket communication.
 
 **Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • [JetBrains Koog](https://github.com/jetbrains/koog) • WebFlux • Svelte, OpenAPI
 
-<div style="max-height: 90vh; display: inline-flex">
+<div style="max-height: 80vh; display: inline-flex">
 
 [![screenshot-1.png](docs/screenshot-1.png)](https://kpavlov.github.io/koog-spring-boot-assistant/)
+
+</div>
+
+<div style="max-height: 80vh; display: inline-flex">
+
+[![screenshot-2.png](docs/screenshot-2.png)](https://kpavlov.github.io/koog-spring-boot-assistant/)
 
 </div>
 
@@ -178,23 +184,26 @@ The application consists of three main layers:
 The agent implements a node-based execution graph with tool calling capabilities:
 
 ```mermaid
-graph TD
-      Start([Start]) --> Moderate[Moderate Input<br/>OpenAI Moderation]
-      Moderate -->|isHarmful = false| CallLLM[Call LLM]
-      Moderate -->|isHarmful = true| ErrorFinish([Finish<br/>Moderation Error])
-      CallLLM -->|Assistant Message| Finish([Finish<br/>Return Response])
-      CallLLM -->|Tool Call| ExecuteTool[Execute Tool<br/>AssistantTools]
-      ExecuteTool --> SendToolResult[Send Tool Result<br/>to LLM]
-      SendToolResult -->|Assistant Message| Finish
-      SendToolResult -->|Tool Call| ExecuteTool
+---
+title: streaming-strategy
+---
+stateDiagram
+    state "moderate-input" as moderate_input
+    state "mapStringToRequests" as mapStringToRequests
+    state "applyRequestToSession" as applyRequestToSession
+    state "nodeStreaming" as nodeStreaming
+    state "executeMultipleTools" as executeMultipleTools
+    state "mapToolCallsToRequests" as mapToolCallsToRequests
 
-      style Start fill:#90EE90
-      style Finish fill:#90EE90
-      style ErrorFinish fill:#FFB6C6
-      style Moderate fill:#87CEEB
-      style CallLLM fill:#DDA0DD
-      style ExecuteTool fill:#FFE4B5
-      style SendToolResult fill:#E6E6FA
+    [*] --> moderate_input : transformed
+    moderate_input --> mapStringToRequests : transformed
+    moderate_input --> [*] : transformed
+    mapStringToRequests --> applyRequestToSession
+    applyRequestToSession --> nodeStreaming
+    nodeStreaming --> executeMultipleTools : onCondition
+    nodeStreaming --> [*] : onCondition
+    executeMultipleTools --> mapToolCallsToRequests
+    mapToolCallsToRequests --> applyRequestToSession
 ```
 
 #### RAG System

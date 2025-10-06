@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class KoogController(
-    private val agentStrategy: AIAgentGraphStrategy<String, String>,
+    private val agentStrategy: AIAgentGraphStrategy<String, Any>,
 ) : KoogApi {
     private val logger = LoggerFactory.getLogger(KoogController::class.java)
 

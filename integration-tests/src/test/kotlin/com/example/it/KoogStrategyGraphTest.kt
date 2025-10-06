@@ -14,7 +14,7 @@ class KoogStrategyGraphTest : AbstractIntegrationTest() {
             response shouldContain
                 """
                 ---
-                title: test-strategy
+                title: streaming-strategy
                 ---
                 stateDiagram
                 """.trimIndent()
