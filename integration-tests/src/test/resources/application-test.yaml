@@ -10,7 +10,8 @@ logging:
     level:
         "ai.koog": debug
         # "ai.koog.agents.core.agent.GraphAIAgent": off
-        "com.example.app": trace
+        "ai.koog.agents.features.opentelemetry": error
+        "com.example": trace
     register-shutdown-hook: true
 
 management:

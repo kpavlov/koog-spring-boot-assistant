@@ -2,7 +2,6 @@
 
     export let currentMessage: string;
     export let isLoading: boolean;
-    export let isServerOnline: boolean;
     export let onSend: () => void;
     export let onMessageChange: (message: string) => void;
 

@@ -26,11 +26,10 @@ import com.example.app.ChatSessionId
 import com.example.app.koog.propmts.PromptTemplateProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.sdk.trace.export.SpanExporter
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -48,7 +47,7 @@ class ElvenAgent(
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
     private val persistenceStorageProvider: PersistenceStorageProvider,
     private val promptTemplateProvider: PromptTemplateProvider,
-    private val strategy: AIAgentGraphStrategy<String, String>,
+    private val strategy: AIAgentGraphStrategy<String, Any>,
 ) {
     private val logger = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
@@ -82,93 +81,120 @@ class ElvenAgent(
             return flowOf("") // do nothing
         }
 
-        return try {
-            val relevantDocuments =
-                runBlocking {
-                    rankedDocumentStorage
-                        .mostRelevantDocuments(input, count = 3)
-                        .toList()
-                }
-
-            val systemPrompt =
-                promptTemplateProvider.getPromptTemplate(
-                    group = "elven-assistant",
-                    id = "system",
-                    version = "latest",
-                )
-
-            val agent =
-                AIAgent(
-                    id = chatSessionId,
-                    promptExecutor = promptExecutor,
-                    agentConfig =
-                        AIAgentConfig(
-                            prompt =
-                                createPrompt(systemPrompt, input, relevantDocuments),
-                            model = OpenAIModels.CostOptimized.GPT4_1Mini,
-                            maxAgentIterations = 100,
-                        ),
-                    strategy = strategy,
-                    toolRegistry = tools,
-                ) {
-                    install(Persistence) {
-                        storage = persistenceStorageProvider
-
-                        // Enable automatic checkpoint creation
-                        this.enableAutomaticPersistence = true
-
-                        // We preserve message history on restore
-                        this.rollbackStrategy = RollbackStrategy.MessageHistoryOnly
+        return callbackFlow {
+            try {
+                val relevantDocuments =
+                    runBlocking {
+                        rankedDocumentStorage
+                            .mostRelevantDocuments(input, count = 3)
+                            .toList()
                     }
 
-                    install(OpenTelemetry) {
-                        setServiceInfo(serviceName = buildProps.name, serviceVersion = buildProps.version)
-                        // Configuration options here
-                        setVerbose(true)
-                        spanExporters.forEach {
-                            addSpanExporter(it)
+                val systemPrompt =
+                    promptTemplateProvider.getPromptTemplate(
+                        group = "elven-assistant",
+                        id = "system",
+                        version = "latest",
+                    )
+
+                val agent =
+                    AIAgent(
+                        id = chatSessionId,
+                        promptExecutor = promptExecutor,
+                        agentConfig =
+                            AIAgentConfig(
+                                prompt =
+                                    createPrompt(systemPrompt, input, relevantDocuments),
+                                model = OpenAIModels.CostOptimized.GPT4_1Mini,
+                                maxAgentIterations = 100,
+                            ),
+                        strategy = strategy,
+                        toolRegistry = tools,
+                    ) {
+                        install(Persistence) {
+                            storage = persistenceStorageProvider
+
+                            // Enable automatic checkpoint creation
+                            this.enableAutomaticPersistence = true
+
+                            // We preserve message history on restore
+                            this.rollbackStrategy = RollbackStrategy.MessageHistoryOnly
                         }
-                    }
 
-                    if (enableTracing) {
-                        install(Tracing) {
-                            // Configure message processors to handle trace events
-                            addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
-                        }
-                    }
-
-                    handleEvents {
-                        onLLMStreamingFrameReceived { context ->
-                            (context.streamFrame as? StreamFrame.Append)?.let { frame ->
-                                logger.info("➡️ Received: \"${frame.text}\"")
-                                print(frame.text)
+                        install(OpenTelemetry) {
+                            setServiceInfo(serviceName = buildProps.name, serviceVersion = buildProps.version)
+                            // Configuration options here
+                            setVerbose(true)
+                            spanExporters.forEach {
+                                addSpanExporter(it)
                             }
                         }
-                        onLLMStreamingFailed {
-                            logger.warn("❌ Error: ${it.error}")
+
+                        if (enableTracing) {
+                            install(Tracing) {
+                                // Configure message processors to handle trace events
+                                addMessageProcessor(TraceFeatureMessageLogWriter(kotlinLogger))
+                            }
                         }
-                        onLLMStreamingCompleted {
-                            logger.debug("✅ Streaming complete")
+
+                        handleEvents {
+                            onToolCallStarting { context ->
+                                logger.info("\n🔧 Using ${context.tool.name} with ${context.toolArgs}... ")
+                            }
+
+                            onToolValidationFailed {
+                                logger.warn("❌ Tool validation failed. tool=${it.tool} error=${it.error}")
+                                send(systemErrorResponse)
+                                close()
+                            }
+
+                            onNodeExecutionFailed {
+                                logger.warn("❌ Node execution failed: ${it.node}", it.throwable)
+                                send(systemErrorResponse)
+                                close()
+                            }
+
+                            onLLMStreamingFrameReceived { context ->
+                                (context.streamFrame as? StreamFrame.Append)?.let { frame ->
+                                    logger.info("➡️ Received: \"${frame.text}\"")
+                                    send(frame.text)
+                                }
+                            }
+
+                            onLLMStreamingFailed {
+                                logger.warn("❌ Error: ${it.error}")
+                                send(systemErrorResponse)
+                                close()
+                            }
+
+                            onLLMStreamingCompleted {
+                                logger.debug("✅ Streaming complete")
+                                close()
+                            }
+                        }
+                    }
+
+                logger.trace("Running command: {}", input)
+
+                agent.run(input)
+                agent.close()
+
+                awaitClose {
+                    logger.debug("Flow cancelled for session: $chatSessionId, cleaning up resources")
+                    runBlocking {
+                        try {
+                            agent.close()
+                            logger.debug("Agent closed successfully for session: $chatSessionId")
+                        } catch (e: Exception) {
+                            logger.error("Error closing agent during cleanup for session: $chatSessionId", e)
                         }
                     }
                 }
-
-            logger.trace("Running command: {}", input)
-            val tokens =
-                runBlocking {
-                    agent
-                        .run(input)
-                        .splitToSequence(" ")
-                        .map { "$it " }
-                }
-            return tokens
-                .asFlow()
-                .onEach {
-                    delay(100) // simulate delay
-                }
-        } catch (e: Exception) {
-            logger.error("Error processing request", e)
-            flowOf(systemErrorResponse)
+            } catch (e: Exception) {
+                logger.error("❌ Error processing request", e)
+                trySend(systemErrorResponse)
+                close()
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+    import {createEventDispatcher, onDestroy, onMount} from 'svelte';
     import mermaid from 'mermaid';
-    import panzoom, { type PanZoom } from 'panzoom';
+    import panzoom, {type PanZoom} from 'panzoom';
 
     export let title: string = 'Diagram';
     export let diagramFetcher: () => Promise<string>;
@@ -14,22 +14,52 @@
     let panzoomInstance: PanZoom | null = null;
     let isLoading = false;
     let error = '';
+    let currentTheme = '';
+
+    // Function to detect the current effective theme
+    function getCurrentTheme(): 'light' | 'dark' {
+        const dataTheme = document.documentElement.getAttribute('data-theme');
+        if (dataTheme === 'light' || dataTheme === 'dark') {
+            return dataTheme;
+        }
+        // For 'auto' theme or no theme set, check system preference
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Function to get Mermaid theme based on current theme
+    function getMermaidTheme(theme: 'light' | 'dark'): "dark" | "default" {
+        return theme === 'dark' ? 'dark' : 'default';
+    }
 
     async function loadDiagram() {
-        if (diagramContent) return; // Already loaded
+        const theme = getCurrentTheme();
+        const mermaidTheme = getMermaidTheme(theme);
+
+        // Check if we need to re-render due to theme change
+        if (diagramContent && currentTheme === mermaidTheme) {
+            return; // Already loaded with correct theme
+        }
 
         isLoading = true;
         error = '';
-        
+        currentTheme = mermaidTheme;
+
+        // Reinitialize Mermaid with the current theme
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: mermaidTheme,
+            securityLevel: 'loose',
+        });
+
         try {
             const rawContent = await diagramFetcher();
             // Render the Mermaid diagram
-            const { svg } = await mermaid.render(`${modalId}-graph`, rawContent);
+            const {svg} = await mermaid.render(`${modalId}-graph`, rawContent);
             diagramContent = svg;
         } catch (loadError) {
             console.error('Failed to load diagram:', loadError);
             try {
-                const { svg } = await mermaid.render(`${modalId}-error`, 'graph TD\n    Error["Failed to load diagram"]');
+                const {svg} = await mermaid.render(`${modalId}-error`, 'graph TD\n    Error["Failed to load diagram"]');
                 diagramContent = svg;
             } catch (renderError) {
                 error = 'Failed to load diagram';
@@ -68,7 +98,7 @@
         dispatch('close');
     }
 
-    // Handle modal open/close
+    // Handle modal open/close and theme changes
     $: if (isOpen) {
         loadDiagram().then(() => {
             if (diagramContent && !error) {
@@ -79,13 +109,41 @@
         cleanup();
     }
 
+    // Reactive logic to detect theme changes and force re-render
+    $: if (typeof window !== 'undefined') {
+        const theme = getCurrentTheme();
+        const mermaidTheme = getMermaidTheme(theme);
+        if (isOpen && currentTheme && currentTheme !== mermaidTheme) {
+            // Theme changed, clear content to force re-render
+            diagramContent = '';
+            loadDiagram().then(() => {
+                if (diagramContent && !error) {
+                    initializePanzoom();
+                }
+            });
+        }
+    }
+
     onMount(() => {
-        // Initialize Mermaid if not already done
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'default',
-            securityLevel: 'loose',
-        });
+        // Listen for system theme changes when in auto mode
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleThemeChange = () => {
+            if (isOpen && document.documentElement.getAttribute('data-theme') === null) {
+                // Only react to system theme changes when in auto mode
+                diagramContent = '';
+                loadDiagram().then(() => {
+                    if (diagramContent && !error) {
+                        initializePanzoom();
+                    }
+                });
+            }
+        };
+
+        mediaQuery.addEventListener('change', handleThemeChange);
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleThemeChange);
+        };
     });
 
     onDestroy(() => {
@@ -138,7 +196,7 @@
 
     /* Diagram Modal - Large version for diagrams */
     .diagram-modal-content {
-        background: white;
+        background: var(--color-modal-bg);
         border-radius: 1rem;
         width: 95%;
         height: 95vh;
@@ -154,14 +212,14 @@
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem 2rem;
-        border-bottom: 2px solid #e5e7eb;
+        border-bottom: 2px solid var(--color-modal-border);
         flex-shrink: 0;
     }
 
     .diagram-modal-header h2 {
         margin: 0;
         font-size: 1.8rem;
-        color: #1f2937;
+        color: var(--color-modal-text);
     }
 
     .diagram-controls {
@@ -172,7 +230,7 @@
 
     .zoom-info {
         font-size: 0.9rem;
-        color: #6b7280;
+        color: var(--color-text-secondary);
         font-style: italic;
     }
 
@@ -180,7 +238,7 @@
         background: none;
         border: none;
         font-size: var(--fs-modal-close);
-        color: #6b7280;
+        color: var(--color-text-secondary);
         cursor: pointer;
         padding: 0;
         width: var(--size-modal-close);
@@ -193,8 +251,8 @@
     }
 
     .modal-close:hover {
-        background: #f3f4f6;
-        color: #1f2937;
+        background: var(--color-code-bg);
+        color: var(--color-modal-text);
     }
 
     .diagram-modal-body {
@@ -213,9 +271,9 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--color-modal-border);
         border-radius: 0.5rem;
-        background: #f9fafb;
+        background: var(--color-chat-bg);
     }
 
     .diagram-content {
@@ -239,7 +297,7 @@
     }
 
     .loading-message {
-        color: #6b7280;
+        color: var(--color-text-secondary);
         font-size: 1.2rem;
         text-align: center;
     }
@@ -254,46 +312,4 @@
         border: 1px solid #fecaca;
     }
 
-    /* Dark mode */
-    @media (prefers-color-scheme: dark) {
-        .diagram-modal-content {
-            background: #1f2937;
-        }
-
-        .diagram-modal-header {
-            border-bottom-color: #4b5563;
-        }
-
-        .diagram-modal-header h2 {
-            color: #f9fafb;
-        }
-
-        .zoom-info {
-            color: #9ca3af;
-        }
-
-        .modal-close {
-            color: #9ca3af;
-        }
-
-        .modal-close:hover {
-            background: #374151;
-            color: #f9fafb;
-        }
-
-        .diagram-container {
-            background: #111827;
-            border-color: #4b5563;
-        }
-
-        .loading-message {
-            color: #9ca3af;
-        }
-
-        .error-message {
-            background: #7f1d1d;
-            color: #fca5a5;
-            border-color: #991b1b;
-        }
-    }
 </style>

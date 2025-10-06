@@ -3,6 +3,10 @@ package com.example.it
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
@@ -31,8 +35,8 @@ class AiChatPositiveTest : AbstractIntegrationTest() {
             mockOpenai.completion {
                 systemMessageContains("witty and wise Elven assistant guiding adventurers")
                 userMessageContains(question)
-            } responds {
-                assistantContent = expectedAnswer
+            } respondsStream {
+                responseFlow = flowOf(expectedAnswer)
             }
 
             val response = chatClient.sendMessage(question)

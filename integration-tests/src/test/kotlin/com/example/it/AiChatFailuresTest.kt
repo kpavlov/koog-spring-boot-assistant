@@ -3,7 +3,9 @@ package com.example.it
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -92,6 +94,15 @@ class AiChatFailuresTest : AbstractIntegrationTest() {
                 inputContains(question)
             } responds {
                 flagged = false
+            }
+
+            mockOpenai.completion {
+                systemMessageContains("witty and wise Elven assistant guiding adventurers")
+                userMessageContains(question)
+            } respondsError {
+                httpStatusCode = errorStatusCode
+                contentType = ContentType.Text.EventStream
+                body = emptyFlow<String>()
             }
 
             mockOpenai.completion {

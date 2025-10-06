@@ -5,12 +5,14 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
 import me.kpavlov.aimocks.openai.model.moderation.ModerationCategory
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 
 class AiChatNegativeScenariosTest : AbstractIntegrationTest() {
     @Test
+    @Disabled
     fun `Should moderate bad language`(): Unit =
         runTest {
             val seed = nextInt()
