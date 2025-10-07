@@ -13,7 +13,7 @@ internal class CorsConfig {
         val corsConfig =
             CorsConfiguration().apply {
                 allowedOriginPatterns = listOf("*")
-                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                allowedMethods = listOf("GET", "POST")
                 allowedHeaders = listOf("*")
                 allowCredentials = true
                 maxAge = 3600L

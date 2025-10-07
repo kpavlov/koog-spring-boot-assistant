@@ -7,6 +7,8 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -31,6 +33,9 @@ class ChatClient(
             followRedirects = true
             install(ContentNegotiation) {
                 json()
+            }
+            install(Logging) {
+                level = LogLevel.ALL
             }
         }
 
@@ -63,6 +68,7 @@ class ChatClient(
                     ChatRequest(
                         chatRequestId = requestId,
                         message = message,
+                        streaming = false,
                     ),
                 )
             }

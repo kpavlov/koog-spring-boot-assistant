@@ -116,10 +116,11 @@ components:
         ChatSessionId:
             description: Chat Session identifier  for the conversation
             type: string
-            pattern: '^[_0-9a-f-]{16,64}$'
+            pattern: '^[_0-9a-zA-Z-]{1,64}$'
             example: "550e8400-e29b-41d4-a716-446655440000"
         ChatRequestId:
-            description: Chat Request identifier\
+            description: Chat Request identifier
+            pattern: '^[_0-9a-zA-Z-]{1,64}$'
             type: string
         ChatRequest:
             type: object
