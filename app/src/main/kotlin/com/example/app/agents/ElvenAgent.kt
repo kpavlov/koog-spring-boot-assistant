@@ -115,7 +115,7 @@ class ElvenAgent(
                                 maxAgentIterations = 100,
                             ),
                         strategy = strategy,
-                        toolRegistry = ToolRegistry.EMPTY, // tools, // TODO: fix serialization
+                        // toolRegistry=tools, // TODO: fix serialization
                     ) {
                         install(Persistence) {
                             storage = persistenceStorageProvider
@@ -158,7 +158,7 @@ class ElvenAgent(
                             }
 
                             onNodeExecutionCompleted { context ->
-                                logger.debug("Node execution completed: $context")
+                                logger.trace("Node execution completed: {}", context)
 
                                 val moderatedMessage = context.output as? ModeratedMessage
                                 moderatedMessage?.let {
