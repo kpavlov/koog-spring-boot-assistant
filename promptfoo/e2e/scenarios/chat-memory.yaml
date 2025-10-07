@@ -1,6 +1,6 @@
 config:
   - vars:
-      sessionId: promptfoo-chat-memory
+      sessionId: pf-chat-memory
 
 tests:
   - description: Hello

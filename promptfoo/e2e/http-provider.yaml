@@ -1,12 +1,15 @@
 id: http
 config:
   useHttps: false
-  url: 'http://localhost:8080/api/chat'
+  url: 'http://127.0.0.1:8080/api/chat'
   method: POST
   headers:
-      x-model: '{{model}}' # A way to control offline test execution. Disable on prod
+#      Content-Type: application/json
+      X-Session-ID: '{{sessionId}}'
   body:
       message: '{{query}}'
+      chatRequestId: 'REQ_0b8c27761e9143ddb8b82694e0cf24f2'
       chatSessionId: '{{sessionId}}'
+      streaming: false
 
   transformResponse: 'json.message'

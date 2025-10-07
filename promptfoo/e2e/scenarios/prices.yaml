@@ -1,6 +1,6 @@
 config:
   - vars:
-      sessionId: promptfoo-stocks
+      sessionId: pf-prices
 
 tests:
   - description: Get current time

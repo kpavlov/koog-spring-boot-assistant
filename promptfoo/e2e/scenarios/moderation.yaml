@@ -1,6 +1,6 @@
 config:
   - vars:
-      sessionId: promptfoo-moderation
+      sessionId: pf-moderation
 
 tests:
   - description: Detect moderation

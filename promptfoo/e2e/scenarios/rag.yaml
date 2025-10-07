@@ -1,6 +1,6 @@
 config:
   - vars:
-      sessionId: promptfoo-rag
+      sessionId: pf-rag
       context: file://../../app/data/knowledge/4-morning_pine_elixir.md
 tests:
   - description: Explain morning Pine Elixir
