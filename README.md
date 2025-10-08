@@ -5,6 +5,10 @@
 
 [**WEB UI**](https://kpavlov.github.io/koog-spring-boot-assistant/)
 
+🎞️ Featuring in the ["Testing Challenges in the Age of AI"](https://m.devoxx.com/events/dvbe25/talks/25280/testing-challenges-in-the-age-of-ai) 
+Devoxx Belgium 2025 talk
+ - [Slides](https://speakerdeck.com/kpavlov/testing-challenges-in-the-age-of-ai-devoxx-dot-be-2025)
+
 ## Overview
 
 An AI-powered conversational assistant demonstrating 
@@ -17,12 +21,14 @@ session persistence, and real-time WebSocket communication.
 - 🤖 **AI Agent Workflow**: Multi-node execution graph with input moderation, LLM processing, and conditional routing
 - 💬 [**Interactive Chat UI**]((https://kpavlov.github.io/koog-spring-boot-assistant/)): Svelte-based web interface with real-time WebSocket messaging
 - 📚 **RAG System**: Vector-based knowledge retrieval from markdown documents
-- 🛠️ **Custom Tools**: Extensible tool system (e.g., Elven marketplace, time conversion)
 - 🔍 **Observability**: Integrated OpenTelemetry tracing and metrics
-- 🧪 **Prompt Evaluation**: Promptfoo integration for testing and optimizing LLM prompts
 - 💾 **Session Management**: Persistent conversation state with checkpoint recovery
 
-**Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • [JetBrains Koog](https://github.com/jetbrains/koog) • WebFlux • Svelte, OpenAPI
+**Testing:**
+- 🧪 **Fast and deterministic integration testing** with [Mokksy.dev](https://mokksy.dev). **Run them on the plane ✈️!!!**
+- 🧫 **Prompt Evaluation**: Promptfoo integration for testing and optimizing LLM prompts
+
+**Tech Stack:** Spring Boot 3.5 • Kotlin 2.2 • [JetBrains Koog](https://github.com/jetbrains/koog) • [Mokksy.dev](https://mokksy.dev)• WebFlux • Svelte, OpenAPI
 
 <div style="max-height: 80vh; display: inline-flex">
 
