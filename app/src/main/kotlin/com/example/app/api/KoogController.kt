@@ -8,15 +8,15 @@ import org.springframework.stereotype.Component
 
 @Component
 class KoogController(
-    private val agentStrategy: AIAgentGraphStrategy<String, Any>,
+//    private val agentStrategy: AIAgentGraphStrategy<String, Any>,
 ) : KoogApi {
     private val logger = LoggerFactory.getLogger(KoogController::class.java)
 
     override suspend fun getStrategyGraph(): ResponseEntity<String> {
         logger.info("Received request for strategy graph")
 
-        val mermaidDiagram = agentStrategy.createMermaidDiagram()
+//        val mermaidDiagram = agentStrategy.createMermaidDiagram()
 
-        return ResponseEntity.ok(mermaidDiagram)
+        return ResponseEntity.ok("") // mermaidDiagram)
     }
 }

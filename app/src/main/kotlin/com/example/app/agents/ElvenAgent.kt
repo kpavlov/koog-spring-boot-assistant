@@ -49,7 +49,8 @@ class ElvenAgent(
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
     private val persistenceStorageProvider: PersistenceStorageProvider,
     private val promptTemplateProvider: PromptTemplateProvider,
-    private val strategy: AIAgentGraphStrategy<String, Any>,
+    private val config: AgentConfiguration,
+//    private val strategy: AIAgentGraphStrategy<String, Any>,
 ) {
     private val logger = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
@@ -89,6 +90,11 @@ class ElvenAgent(
         return callbackFlow {
             var agent: AIAgent<String, Any>? = null
             var flowClosed = false
+
+            val strategy =
+                config.streamingAgentStrategy {
+                    trySend(it.text)
+                }
 
             try {
                 val relevantDocuments =
@@ -178,15 +184,6 @@ class ElvenAgent(
                                     flowClosed = true
                                     trySend(systemErrorResponse)
                                     close()
-                                }
-                            }
-
-                            onLLMStreamingFrameReceived { context ->
-                                (context.streamFrame as? StreamFrame.Append)?.let { frame ->
-                                    logger.info("➡️ Received: \"${frame.text}\"")
-                                    if (!flowClosed) {
-                                        trySend(frame.text)
-                                    }
                                 }
                             }
 

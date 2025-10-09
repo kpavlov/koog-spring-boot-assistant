@@ -3,20 +3,32 @@ package com.example.app.agents
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteMultipleTools
+import ai.koog.agents.core.dsl.extension.nodeExecuteMultipleToolsAndSendResults
 import ai.koog.agents.core.dsl.extension.nodeLLMModerateMessage
+import ai.koog.agents.core.dsl.extension.nodeLLMRequestStreaming
 import ai.koog.agents.core.dsl.extension.nodeLLMRequestStreamingAndSendResults
+import ai.koog.agents.core.dsl.extension.nodeLLMSendMultipleToolResults
 import ai.koog.agents.core.dsl.extension.onMultipleToolCalls
 import ai.koog.agents.core.environment.ReceivedToolResult
+import ai.koog.agents.core.environment.executeTool
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
+import ai.koog.prompt.message.ResponseMetaInfo
+import ai.koog.prompt.streaming.StreamFrame
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMap
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
+import org.springframework.beans.factory.config.ConfigurableBeanFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Scope
 
 @Configuration
 class AgentConfiguration {
-    @Bean
-    fun streamingAgentStrategy() =
+    fun streamingAgentStrategy(processFrame: (StreamFrame.Append) -> Unit) =
         strategy(
             name = "streaming-strategy",
         ) {
@@ -25,35 +37,32 @@ class AgentConfiguration {
                 moderatingModel = OpenAIModels.Moderation.Omni,
             )
             val executeMultipleTools by nodeExecuteMultipleTools(parallelTools = true)
-            val nodeStreaming by nodeLLMRequestStreamingAndSendResults()
+            val nodeStreaming by nodeLLMRequestStreaming()
+            val nodeSendResults by node<Flow<StreamFrame>, List<Message.Response>> { frames ->
+                var end: StreamFrame.End? = null
 
-            val mapStringToRequests by node<String, List<Message.Request>> { input ->
-                listOf(Message.User(content = input, metaInfo = RequestMetaInfo.Empty))
-            }
-
-            val applyRequestToSession by node<List<Message.Request>, List<Message.Request>> { input ->
-                llm.writeSession {
-                    updatePrompt {
-                        input
-                            .filterIsInstance<Message.User>()
-                            .forEach {
-                                user(it.content)
+                frames
+                    .mapNotNull {
+                        when (it) {
+                            is StreamFrame.Append -> {
+                                processFrame(it)
+                                null
                             }
-
-                        tool {
-                            input
-                                .filterIsInstance<Message.Tool.Result>()
-                                .forEach {
-                                    result(it)
-                                }
+                            is StreamFrame.End -> {
+                                end = it
+                                null
+                            }
+                            is StreamFrame.ToolCall -> it
                         }
-                    }
-                    input
-                }
-            }
-
-            val mapToolCallsToRequests by node<List<ReceivedToolResult>, List<Message.Request>> { input ->
-                input.map { it.toMessage() }
+                    }.map {
+                        Message.Tool.Call(
+                            id = it.id,
+                            tool = it.name,
+                            content = it.content,
+                            metaInfo =
+                                end?.metaInfo ?: ResponseMetaInfo.Empty,
+                        )
+                    }.toList()
             }
 
             edge(
@@ -63,7 +72,7 @@ class AgentConfiguration {
             )
 
             edge(
-                moderateInput forwardTo mapStringToRequests
+                moderateInput forwardTo nodeStreaming
                     onCondition { !it.moderationResult.isHarmful }
                     transformed { it.message.content },
             )
@@ -74,13 +83,13 @@ class AgentConfiguration {
                     transformed { "" }, // handles on Agent level
             )
 
-            edge(mapStringToRequests forwardTo applyRequestToSession)
-            edge(applyRequestToSession forwardTo nodeStreaming)
-            edge(nodeStreaming forwardTo executeMultipleTools onMultipleToolCalls { true })
-            edge(executeMultipleTools forwardTo mapToolCallsToRequests)
-            edge(mapToolCallsToRequests forwardTo applyRequestToSession)
+            val sendToolResults by nodeLLMSendMultipleToolResults()
+
+            edge(nodeStreaming forwardTo nodeSendResults)
+            edge(nodeSendResults forwardTo executeMultipleTools onMultipleToolCalls { true })
+            edge(executeMultipleTools forwardTo sendToolResults)
             edge(
-                nodeStreaming forwardTo nodeFinish onCondition {
+                nodeSendResults forwardTo nodeFinish onCondition {
                     it.filterIsInstance<Message.Tool.Call>().isEmpty()
                 },
             )
