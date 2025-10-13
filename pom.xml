@@ -44,7 +44,7 @@
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.8.1</kotlinx-serialization.version>
-        <mokksy.version>0.5.0</mokksy.version>
+        <mokksy.version>0.5.1</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
         <netty.version>4.2.6.Final</netty.version>
         <spring-boot.version>3.5.6</spring-boot.version>
