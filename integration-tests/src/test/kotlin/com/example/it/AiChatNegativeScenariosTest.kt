@@ -1,10 +1,10 @@
 package com.example.it
 
+import dev.mokksy.aimocks.openai.model.moderation.ModerationCategory
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
-import me.kpavlov.aimocks.openai.model.moderation.ModerationCategory
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 import kotlin.time.Duration.Companion.milliseconds

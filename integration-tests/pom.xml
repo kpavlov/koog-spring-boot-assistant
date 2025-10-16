@@ -20,7 +20,7 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>me.kpavlov.aimocks</groupId>
+            <groupId>dev.mokksy.aimocks</groupId>
             <artifactId>ai-mocks-openai-jvm</artifactId>
             <scope>test</scope>
         </dependency>

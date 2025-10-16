@@ -44,7 +44,7 @@
         <kotlin.version>2.2.20</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-        <mokksy.version>0.5.1</mokksy.version>
+        <mokksy.version>0.6.1</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
         <netty.version>4.2.7.Final</netty.version>
         <spring-boot.version>3.5.6</spring-boot.version>
@@ -107,13 +107,13 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>me.kpavlov.aimocks</groupId>
+                <groupId>dev.mokksy.aimocks</groupId>
                 <artifactId>ai-mocks-openai-jvm</artifactId>
                 <version>${mokksy.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>me.kpavlov.aimocks</groupId>
+                <groupId>dev.mokksy.aimocks</groupId>
                 <artifactId>ai-mocks-ollama-jvm</artifactId>
                 <version>${mokksy.version}</version>
                 <scope>test</scope>

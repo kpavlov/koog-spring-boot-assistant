@@ -1,6 +1,6 @@
 package com.example.it
 
-import aws.smithy.kotlin.runtime.io.closeIfCloseable
+import com.example.it.infra.TestEnvironment
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 

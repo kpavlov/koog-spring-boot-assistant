@@ -1,6 +1,6 @@
-package com.example.it
+package com.example.it.infra
 
-import me.kpavlov.aimocks.openai.MockOpenai
+import dev.mokksy.aimocks.openai.MockOpenai
 import org.awaitility.Awaitility
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds

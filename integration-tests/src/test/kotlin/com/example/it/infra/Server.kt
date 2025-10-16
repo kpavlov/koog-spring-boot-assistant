@@ -1,5 +1,6 @@
 package com.example.it
 
+import com.example.it.infra.TestEnvironment
 import kotlinx.coroutines.runBlocking
 import org.awaitility.kotlin.await
 import org.springframework.boot.SpringApplication
