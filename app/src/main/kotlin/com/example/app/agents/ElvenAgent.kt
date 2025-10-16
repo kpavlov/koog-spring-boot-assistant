@@ -3,7 +3,6 @@ package com.example.app.agents
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.RollbackStrategy
-import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.extension.ModeratedMessage
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
@@ -13,6 +12,7 @@ import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageLogWriter
 import ai.koog.agents.snapshot.feature.Persistence
 import ai.koog.agents.snapshot.providers.PersistenceStorageProvider
+import ai.koog.agents.snapshot.providers.filters.AgentCheckpointPredicateFilter
 import ai.koog.prompt.dsl.AttachmentBuilder
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
@@ -21,7 +21,6 @@ import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.streaming.StreamFrame
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
 import com.example.app.ChatSessionId
@@ -47,10 +46,9 @@ class ElvenAgent(
     private val spanExporters: List<SpanExporter>,
     private val buildProps: BuildProperties,
     private val rankedDocumentStorage: RankedDocumentStorage<Path>,
-    private val persistenceStorageProvider: PersistenceStorageProvider,
+    private val persistenceStorageProvider: PersistenceStorageProvider<AgentCheckpointPredicateFilter>,
     private val promptTemplateProvider: PromptTemplateProvider,
-    private val config: AgentConfiguration,
-//    private val strategy: AIAgentGraphStrategy<String, Any>,
+    private val agentConfiguration: AgentConfiguration,
 ) {
     private val logger = LoggerFactory.getLogger(ElvenAgent::class.java)
     private val kotlinLogger = KotlinLogging.logger(name = "ElvenAgent")
@@ -92,7 +90,7 @@ class ElvenAgent(
             var flowClosed = false
 
             val strategy =
-                config.streamingAgentStrategy {
+                agentConfiguration.streamingAgentStrategy {
                     trySend(it.text)
                 }
 

@@ -2,6 +2,7 @@ package com.example.app.koog
 
 import ai.koog.agents.snapshot.providers.PersistenceStorageProvider
 import ai.koog.agents.snapshot.providers.file.JVMFilePersistenceStorageProvider
+import ai.koog.agents.snapshot.providers.filters.AgentCheckpointPredicateFilter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -13,7 +14,7 @@ class PersistenceConfiguration {
     private lateinit var sessionsStorePath: Path
 
     @Bean
-    fun persistenceStorageProvider(): PersistenceStorageProvider =
+    fun persistenceStorageProvider(): PersistenceStorageProvider<AgentCheckpointPredicateFilter> =
         JVMFilePersistenceStorageProvider(
             root = sessionsStorePath,
         )
