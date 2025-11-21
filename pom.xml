@@ -37,14 +37,13 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
         <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-        <!-- <koog.version>0.5.0-develop-20251006-0211</koog.version>-->
-        <koog.version>0.5.2-feat-01-02</koog.version>
+        <koog.version>0.5.3</koog.version>
         <kotest.version>5.9.1</kotest.version>
         <ktor.version>3.3.2</ktor.version>
         <kotlin.version>2.2.21</kotlin.version>
         <kotlinx-coroutines.version>1.10.2</kotlinx-coroutines.version>
         <kotlinx-serialization.version>1.9.0</kotlinx-serialization.version>
-        <mokksy.version>0.6.1</mokksy.version>
+        <mokksy.version>0.6.2</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
         <netty.version>4.2.7.Final</netty.version>
         <spring-boot.version>3.5.7</spring-boot.version>

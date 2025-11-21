@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 
 class CreateMermaidDiagramTest {
     private val strategy =
-        strategy(
+        strategy<String, String>(
             name = "test-strategy",
         ) {
             val moderateInput by nodeLLMModerateMessage(

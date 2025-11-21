@@ -13,13 +13,12 @@ import ai.koog.agents.features.tracing.writer.TraceFeatureMessageLogWriter
 import ai.koog.agents.snapshot.feature.Persistence
 import ai.koog.agents.snapshot.providers.PersistenceStorageProvider
 import ai.koog.agents.snapshot.providers.filters.AgentCheckpointPredicateFilter
-import ai.koog.prompt.dsl.AttachmentBuilder
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
-import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
+import ai.koog.prompt.message.ContentPart
 import ai.koog.prompt.params.LLMParams
 import ai.koog.rag.base.RankedDocumentStorage
 import ai.koog.rag.base.mostRelevantDocuments
@@ -36,9 +35,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
 import org.springframework.stereotype.Service
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
+import kotlin.io.path.readText
 
 @Service
 class ElvenAgent(
@@ -243,25 +243,10 @@ class ElvenAgent(
                 +"User's input: ```$input```."
                 if (relevantDocuments.isNotEmpty()) {
                     +"Use attachment as relevant context"
-                    attachments {
-                        relevantDocuments.forEach {
-                            createAttachmentFromFile(path = it)
-                        }
+                    relevantDocuments.forEach { path ->
+                        text(path.readText())
                     }
                 }
             }
         }
-}
-
-private fun AttachmentBuilder.createAttachmentFromFile(path: Path) {
-    val file = File("./${path.pathString}")
-    val text = file.readText()
-    attachment(
-        Attachment.File(
-            content = AttachmentContent.PlainText(text),
-            format = "md",
-            mimeType = "text/plain",
-            fileName = file.name,
-        ),
-    )
 }
