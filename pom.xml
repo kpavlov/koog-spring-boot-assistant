@@ -47,7 +47,7 @@
         <mokksy.version>0.6.1</mokksy.version>
         <!-- <mokksy.version>0.5.1-SNAPSHOT</mokksy.version>-->
         <netty.version>4.2.7.Final</netty.version>
-        <spring-boot.version>3.5.7</spring-boot.version>
+        <spring-boot.version>3.5.8</spring-boot.version>
         <junit-pioneer.version>2.3.0</junit-pioneer.version>
     </properties>
 
