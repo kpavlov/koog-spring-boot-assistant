@@ -30,7 +30,7 @@
         <connection>git@github.com:kpavlov/koog-spring-boot-assistant.git</connection>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>24</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>${java.version}</maven.compiler.release>

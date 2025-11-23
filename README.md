@@ -5,7 +5,7 @@
 
 [**WEB UI**](https://kpavlov.github.io/koog-spring-boot-assistant/)
 
-🎞️ Featuring in the ["Testing Challenges in the Age of AI"](https://m.devoxx.com/events/dvbe25/talks/25280/testing-challenges-in-the-age-of-ai) 
+🎞️ Featuring in the ["Testing Challenges in the Age of AI"](https://www.youtube.com/watch?v=IwAsq3EfaC0) 
 Devoxx Belgium 2025 talk
  - [Slides](https://speakerdeck.com/kpavlov/testing-challenges-in-the-age-of-ai-devoxx-dot-be-2025)
 
