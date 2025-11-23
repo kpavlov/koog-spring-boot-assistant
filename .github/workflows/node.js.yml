@@ -4,6 +4,7 @@
 name: Node.js CI
 
 on:
+  merge_group:
   push:
     branches: [ "main" ]
     paths:

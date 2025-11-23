@@ -9,6 +9,7 @@
 name: Java CI with Maven
 
 on:
+  merge_group:
   push:
     branches: [ "main" ]
     paths-ignore:
@@ -36,10 +37,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    - name: Set up JDK 21
+    - name: Set up JDK 25
       uses: actions/setup-java@v5
       with:
-        java-version: '21'
+        java-version: '25'
         distribution: 'temurin'
         cache: maven
 
