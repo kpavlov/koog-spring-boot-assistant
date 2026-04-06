@@ -20,7 +20,7 @@
     "vite": "^7.1.11"
   },
   "dependencies": {
-    "lucide-svelte": "^0.577.0",
+    "lucide-svelte": "^1.0.0",
     "marked": "^17.0.0",
     "mermaid": "^11.12.0",
     "panzoom": "^9.4.3"
